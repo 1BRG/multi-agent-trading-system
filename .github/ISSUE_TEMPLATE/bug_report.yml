@@ -1,0 +1,40 @@
+name: "System Defect / LLM Failure Report"
+description: "Report a deterministic crash, state corruption, or an unexpected AI reasoning failure."
+title: " - <Short Description>"
+labels: ["bug", "triage"]
+body:
+  - type: dropdown
+    id: failure_type
+    attributes:
+      label: "Classification of Failure"
+      options:
+        - Deterministic Crash (Python Exception / Syntax Error)
+        - LLM Hallucination (Factually incorrect market output)
+        - State Corruption (LangGraph asynchronous routing failure)
+        - Tool Execution Error (API timeout / MCP JSON-RPC failure)
+        - Parsing Exception (Pydantic validation failure)
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: "Steps to Reproduce"
+      description: "Exact sequence required to trigger the failure."
+      placeholder: "1. Initialize the Bull Agent.\n2. Pass the ticker 'NVDA'.\n3. Observe the output of the Judge Agent."
+    validations:
+      required: true
+  - type: textarea
+    id: expected_vs_actual
+    attributes:
+      label: "Expected vs. Actual Behavior"
+      description: "Contrast the intended algorithmic outcome with the erroneous result."
+    validations:
+      required: true
+  - type: textarea
+    id: system_logs
+    attributes:
+      label: "Execution Traces and LangGraph State"
+      description: "Paste relevant backend logs, Ollama inference times, or DeepEval failure metrics."
+      render: bash
+    validations:
+      required: false

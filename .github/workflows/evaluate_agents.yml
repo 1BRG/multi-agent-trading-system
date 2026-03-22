@@ -1,0 +1,63 @@
+name: Autonomous Agent Evaluation Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - develop
+
+jobs:
+  deterministic-tests:
+    name: Execute Pytest (Mathematical & Unit Validation)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install Project Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Run Deterministic Pytest Suite
+        run: pytest tests/unit/ -v --junitxml=coverage.xml
+
+  llm-evaluation:
+    name: Execute DeepEval (Agent Reasoning & Guardrails Verification)
+    needs: deterministic-tests
+    runs-on: [actuated-8cpu-16gb, gpu]
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install DeepEval and Associated Integrations
+        run: pip install deepeval langchain-openai psycopg-pool
+        
+      - name: Bootstrap Ollama Local Inference Server
+        uses: ai-action/setup-ollama@v2
+        
+      - name: Pre-Pull Lightweight CI Evaluation Model
+        run: ollama pull smollm2:1.7b
+        
+      - name: Verify Ollama Service Boot Status
+        run: curl -I http://localhost:11434
+        
+      - name: Execute LLM-as-a-Judge Evaluation (DeepEval)
+        run: deepeval test run tests/evals/ --verbose
+        env:
+          OLLAMA_HOST: "http://localhost:11434"
