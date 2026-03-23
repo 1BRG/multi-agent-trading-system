@@ -33,7 +33,7 @@ jobs:
   llm-evaluation:
     name: Execute DeepEval (Agent Reasoning & Guardrails Verification)
     needs: deterministic-tests
-    runs-on: [actuated-8cpu-16gb, gpu]
+    runs-on: ubuntu-latest
     
     steps:
       - name: Checkout Repository
