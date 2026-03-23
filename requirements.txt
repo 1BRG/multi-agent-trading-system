@@ -1,0 +1,17 @@
+# Orchestration & LLM
+langgraph
+langchain
+pydantic>=2.0.0
+
+# Persistence & Database
+psycopg-pool
+pgvector
+
+# Testing & Evaluation
+pytest
+deepeval
+
+# UI & Formatting
+streamlit
+ruff
+mypy
