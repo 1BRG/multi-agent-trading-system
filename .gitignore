@@ -1,57 +1,19 @@
-==========================================
-Core Python Exclusions
-==========================================
+# Frontend
+node_modules/
+.next/
+out/
+
+# Backend
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-dist/
-build/
-*.egg-info/
-*.egg
-==========================================
-Virtual Environments and Dependencies
-==========================================
-venv/
-env/
-ENV/
-.env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .venv/
-.tox/
-==========================================
-Testing, Coverage, and CI Artifacts
-==========================================
-htmlcov/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-==========================================
-Jupyter and Data Science Artifacts
-==========================================
-.ipynb_checkpoints/
-profile_default/
-ipython_config.py
-==========================================
-AI, LLM, and Vector Database Local State
-==========================================
-# LangGraph state checkpoints and PostgreSQL local mounts
-checkpoints/
-pgdata/
-*.db
-*.sqlite3
-# Local embedding caches (e.g., ChromaDB)
-chroma_db/
-.chroma/
-# Ollama local model storage (if mounted locally during dev)
-.ollama/
-==========================================
-Security and Environment Variables
-==========================================
+venv/
+
+# Environment
 .env
-.env.local
-.env.*
-*.pem
-*.key
+
+# OS / editor
+.DS_Store
+*.swp
