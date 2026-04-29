@@ -1,9 +1,6 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-alembic
+Django>=5.2,<6.0
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
 psycopg[binary]
-pydantic
-pandas
-numpy
 httpx
