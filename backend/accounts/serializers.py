@@ -16,6 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
         "email",
         "password",
         "full_name",
+        "profile_photo",
         "role",
         "is_active",
         "last_login",
@@ -114,7 +115,7 @@ class LoginSerializer(serializers.Serializer):
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
-    fields = ("username", "email", "full_name")
+    fields = ("username", "email", "full_name", "profile_photo")
 
   def validate_email(self, value: str) -> str:
     email = value.strip().lower()

@@ -1,9 +1,15 @@
 from django.db import models
 
 
-class Stock(models.Model):
-  symbol = models.CharField(max_length=16, unique=True)
+class Asset(models.Model):
+  class AssetType(models.TextChoices):
+    STOCK = "stock", "Stock"
+    ETF = "etf", "ETF"
+    COMMODITY = "commodity", "Commodity"
+
+  symbol = models.CharField(max_length=24, unique=True)
   name = models.CharField(max_length=255)
+  asset_type = models.CharField(max_length=20, choices=AssetType.choices, default=AssetType.STOCK)
   sector = models.CharField(max_length=100, blank=True)
   exchange = models.CharField(max_length=50, blank=True)
   currency = models.CharField(max_length=10, default="USD")
@@ -12,6 +18,7 @@ class Stock(models.Model):
   updated_at = models.DateTimeField(auto_now=True)
 
   class Meta:
+    db_table = "assets"
     ordering = ["symbol"]
 
   def save(self, *args, **kwargs):
@@ -23,25 +30,33 @@ class Stock(models.Model):
     return f"{self.symbol} - {self.name}"
 
 
-class StockPrice(models.Model):
-  stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name="prices")
+class AssetPrice(models.Model):
+  asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="prices")
   date = models.DateField()
-  open = models.DecimalField(max_digits=14, decimal_places=4)
-  high = models.DecimalField(max_digits=14, decimal_places=4)
-  low = models.DecimalField(max_digits=14, decimal_places=4)
-  close = models.DecimalField(max_digits=14, decimal_places=4)
-  adjusted_close = models.DecimalField(max_digits=14, decimal_places=4, null=True, blank=True)
-  volume = models.BigIntegerField()
+  open = models.DecimalField(max_digits=18, decimal_places=6)
+  high = models.DecimalField(max_digits=18, decimal_places=6)
+  low = models.DecimalField(max_digits=18, decimal_places=6)
+  close = models.DecimalField(max_digits=18, decimal_places=6)
+  adjusted_close = models.DecimalField(max_digits=18, decimal_places=6, null=True, blank=True)
+  volume = models.BigIntegerField(default=0)
+  source = models.CharField(max_length=50, default="yahoo")
   created_at = models.DateTimeField(auto_now_add=True)
+  updated_at = models.DateTimeField(auto_now=True)
 
   class Meta:
+    db_table = "asset_prices"
     constraints = [
-        models.UniqueConstraint(fields=["stock", "date"], name="market_stock_price_stock_date_unique"),
+        models.UniqueConstraint(fields=["asset", "date"], name="asset_prices_asset_date_unique"),
     ]
     indexes = [
-        models.Index(fields=["stock", "date"], name="stock_price_stock_date_idx"),
+        models.Index(fields=["asset", "date"], name="asset_prices_asset_date_idx"),
     ]
-    ordering = ["stock__symbol", "date"]
+    ordering = ["asset__symbol", "date"]
 
   def __str__(self) -> str:
-    return f"{self.stock.symbol} {self.date}"
+    return f"{self.asset.symbol} {self.date}"
+
+
+# Backwards-compatible aliases while older modules are migrated.
+Stock = Asset
+StockPrice = AssetPrice

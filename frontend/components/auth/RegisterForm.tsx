@@ -7,6 +7,7 @@ import Link from "next/link";
 import { apiRequest } from "../../lib/api";
 import { setAccessToken } from "../../lib/auth";
 import type { AuthResponse, RegisterPayload } from "../../types/auth";
+import { SocialLoginButtons } from "./SocialLoginButtons";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -103,6 +104,8 @@ export function RegisterForm() {
       <button className="primary-button" disabled={isSubmitting} type="submit">
         {isSubmitting ? "Creating account..." : "Create account"}
       </button>
+
+      <SocialLoginButtons />
 
       <p className="form-footer">
         Ai deja cont? <Link href="/login">Intra in cont</Link>

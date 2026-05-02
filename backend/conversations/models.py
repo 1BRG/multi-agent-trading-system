@@ -4,7 +4,7 @@ from django.db import models
 
 class ChatThread(models.Model):
   user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chat_threads")
-  stock = models.ForeignKey("market.Stock", on_delete=models.SET_NULL, null=True, blank=True, related_name="chat_threads")
+  stock = models.ForeignKey("market.Asset", on_delete=models.SET_NULL, null=True, blank=True, related_name="chat_threads")
   title = models.CharField(max_length=255)
   created_at = models.DateTimeField(auto_now_add=True)
   updated_at = models.DateTimeField(auto_now=True)
@@ -40,7 +40,7 @@ class DebateSession(models.Model):
     FAILED = "failed", "Failed"
 
   user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="debate_sessions")
-  stock = models.ForeignKey("market.Stock", on_delete=models.SET_NULL, null=True, blank=True, related_name="debate_sessions")
+  stock = models.ForeignKey("market.Asset", on_delete=models.SET_NULL, null=True, blank=True, related_name="debate_sessions")
   topic = models.CharField(max_length=255)
   status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
   summary = models.TextField(blank=True)

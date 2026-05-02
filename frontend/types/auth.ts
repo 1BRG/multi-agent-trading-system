@@ -3,6 +3,7 @@ export interface User {
   username: string;
   email: string;
   full_name: string;
+  profile_photo: string | null;
   role: string;
   is_active: boolean;
   last_login: string | null;
@@ -16,6 +17,12 @@ export interface AuthResponse {
   refresh_token?: string;
   token_type: "bearer";
   user: User;
+}
+
+export interface SocialAuthStartResponse {
+  authorization_url: string;
+  provider: string;
+  state: string;
 }
 
 export interface LoginPayload {
@@ -33,6 +40,7 @@ export interface UpdateProfilePayload {
   username?: string;
   email?: string;
   full_name?: string;
+  profile_photo?: File;
 }
 
 export interface UpdatePasswordPayload {

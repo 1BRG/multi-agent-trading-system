@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 User = get_user_model()
@@ -69,3 +69,26 @@ class AuthApiTests(TestCase):
     )
 
     self.assertEqual(response.status_code, 400)
+
+  def test_social_login_rejects_unknown_provider(self):
+    response = self.client.post("/auth/social/unknown/start", {}, format="json")
+
+    self.assertEqual(response.status_code, 404)
+
+  def test_social_login_requires_provider_configuration(self):
+    response = self.client.post("/auth/social/google/start", {}, format="json")
+
+    self.assertEqual(response.status_code, 503)
+
+  @override_settings(
+      GOOGLE_OAUTH_CLIENT_ID="google-client-id",
+      GOOGLE_OAUTH_CLIENT_SECRET="google-client-secret",
+      GOOGLE_OAUTH_REDIRECT_URI="http://localhost:3000/auth/callback/google",
+  )
+  def test_social_login_start_returns_authorization_url(self):
+    response = self.client.post("/auth/social/google/start", {}, format="json")
+
+    self.assertEqual(response.status_code, 200)
+    self.assertEqual(response.data["provider"], "google")
+    self.assertIn("state", response.data)
+    self.assertIn("https://accounts.google.com/o/oauth2/v2/auth", response.data["authorization_url"])

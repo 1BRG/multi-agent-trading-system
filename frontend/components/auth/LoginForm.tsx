@@ -7,6 +7,7 @@ import Link from "next/link";
 import { apiRequest } from "../../lib/api";
 import { setAccessToken } from "../../lib/auth";
 import type { AuthResponse, LoginPayload } from "../../types/auth";
+import { SocialLoginButtons } from "./SocialLoginButtons";
 
 export function LoginForm() {
   const router = useRouter();
@@ -56,7 +57,6 @@ export function LoginForm() {
         <span>Password</span>
         <input
           autoComplete="current-password"
-          minLength={8}
           name="password"
           onChange={(event) => setPassword(event.target.value)}
           required
@@ -70,6 +70,8 @@ export function LoginForm() {
       <button className="primary-button" disabled={isSubmitting} type="submit">
         {isSubmitting ? "Signing in..." : "Sign in"}
       </button>
+
+      <SocialLoginButtons />
 
       <p className="form-footer">
         Nu ai cont? <Link href="/register">Creeaza unul</Link>

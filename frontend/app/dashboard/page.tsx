@@ -1,5 +1,5 @@
-import { AccountPanel } from "../../components/auth/AccountPanel";
+import { DashboardHome } from "../../components/auth/DashboardHome";
 
 export default function DashboardPage() {
-  return <AccountPanel />;
+  return <DashboardHome />;
 }

@@ -1,16 +1,17 @@
 from django.contrib import admin
 
-from market.models import Stock, StockPrice
+from market.models import Asset, AssetPrice
 
 
-@admin.register(Stock)
-class StockAdmin(admin.ModelAdmin):
-  list_display = ("symbol", "name", "sector", "exchange", "currency", "is_active")
+@admin.register(Asset)
+class AssetAdmin(admin.ModelAdmin):
+  list_display = ("symbol", "name", "asset_type", "sector", "exchange", "currency", "is_active")
+  list_filter = ("asset_type", "is_active")
   search_fields = ("symbol", "name", "sector")
 
 
-@admin.register(StockPrice)
-class StockPriceAdmin(admin.ModelAdmin):
-  list_display = ("stock", "date", "close", "volume")
-  list_filter = ("stock",)
-  search_fields = ("stock__symbol",)
+@admin.register(AssetPrice)
+class AssetPriceAdmin(admin.ModelAdmin):
+  list_display = ("asset", "date", "close", "volume", "source")
+  list_filter = ("asset", "source")
+  search_fields = ("asset__symbol",)

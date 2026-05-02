@@ -10,6 +10,7 @@ class User(AbstractUser):
 
   email = models.EmailField(unique=True)
   full_name = models.CharField(max_length=255, blank=True)
+  profile_photo = models.FileField(upload_to="profile_photos/", blank=True)
   role = models.CharField(max_length=50, choices=Role.choices, default=Role.USER)
   created_at = models.DateTimeField(auto_now_add=True)
   updated_at = models.DateTimeField(auto_now=True)

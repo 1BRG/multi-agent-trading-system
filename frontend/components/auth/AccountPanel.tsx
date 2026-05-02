@@ -3,20 +3,24 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { apiRequest } from "../../lib/api";
+import { API_BASE_URL, apiRequest } from "../../lib/api";
 import { clearAccessToken } from "../../lib/auth";
 import type {
   UpdatePasswordPayload,
-  UpdateProfilePayload,
   User,
 } from "../../types/auth";
 
-export function AccountPanel() {
+interface AccountPanelProps {
+  embedded?: boolean;
+}
+
+export function AccountPanel({ embedded = false }: AccountPanelProps) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -50,11 +54,13 @@ export function AccountPanel() {
     setMessage(null);
     setIsSavingProfile(true);
 
-    const payload: UpdateProfilePayload = {
-      username,
-      email,
-      full_name: fullName.trim(),
-    };
+    const payload = new FormData();
+    payload.set("username", username);
+    payload.set("email", email);
+    payload.set("full_name", fullName.trim());
+    if (profilePhoto) {
+      payload.set("profile_photo", profilePhoto);
+    }
 
     try {
       const updatedUser = await apiRequest<User>("/users/me", {
@@ -62,6 +68,7 @@ export function AccountPanel() {
         body: payload,
       });
       setUser(updatedUser);
+      setProfilePhoto(null);
       setMessage("Profilul a fost actualizat.");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Update failed.");
@@ -109,31 +116,48 @@ export function AccountPanel() {
     }
   }
 
-  function handleLogout() {
-    clearAccessToken();
-    router.replace("/login");
-  }
+  const profilePhotoUrl = user?.profile_photo
+    ? new URL(user.profile_photo, API_BASE_URL).toString()
+    : null;
 
   if (isLoading) {
-    return <main className="page-shell">Loading...</main>;
+    const LoadingShell = embedded ? "section" : "main";
+    return <LoadingShell className="page-shell">Loading...</LoadingShell>;
   }
 
+  const Shell = embedded ? "section" : "main";
+
   return (
-    <main className="page-shell">
+    <Shell className="page-shell">
       <section className="account-header">
         <div>
           <p className="eyebrow">Account</p>
           <h1>{user?.full_name || user?.username || user?.email}</h1>
           <p className="muted">Role: {user?.role}</p>
         </div>
-        <button className="secondary-button" onClick={handleLogout} type="button">
-          Logout
-        </button>
       </section>
 
       <section className="account-grid">
         <form className="panel-form" onSubmit={handleProfileSubmit}>
           <h2>Profile</h2>
+          <div className="profile-photo-row">
+            {profilePhotoUrl ? (
+              <img className="profile-photo" alt="Profile" src={profilePhotoUrl} />
+            ) : (
+              <div className="profile-photo-placeholder">
+                {(user?.username || user?.email || "U").slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            <label className="field profile-photo-input">
+              <span>Profile photo</span>
+              <input
+                accept="image/*"
+                name="profile_photo"
+                onChange={(event) => setProfilePhoto(event.target.files?.[0] ?? null)}
+                type="file"
+              />
+            </label>
+          </div>
           <label className="field">
             <span>Username</span>
             <input
@@ -213,6 +237,6 @@ export function AccountPanel() {
           Deactivate my account
         </button>
       </section>
-    </main>
+    </Shell>
   );
 }

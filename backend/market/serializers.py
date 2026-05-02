@@ -1,33 +1,45 @@
 from rest_framework import serializers
 
-from market.models import Stock, StockPrice
+from market.models import Asset, AssetPrice
 
 
-class StockSerializer(serializers.ModelSerializer):
+class AssetSerializer(serializers.ModelSerializer):
+  latest_price = serializers.SerializerMethodField()
+
   class Meta:
-    model = Stock
+    model = Asset
     fields = (
         "id",
         "symbol",
         "name",
+        "asset_type",
         "sector",
         "exchange",
         "currency",
         "is_active",
+        "latest_price",
         "created_at",
         "updated_at",
     )
     read_only_fields = ("id", "created_at", "updated_at")
 
+  def get_latest_price(self, asset):
+    latest_price = asset.prices.order_by("-date").first()
+    if latest_price is None:
+      return None
+    return ChartAssetPriceSerializer(latest_price).data
 
-class StockPriceSerializer(serializers.ModelSerializer):
-  symbol = serializers.CharField(source="stock.symbol", read_only=True)
+
+class AssetPriceSerializer(serializers.ModelSerializer):
+  symbol = serializers.CharField(source="asset.symbol", read_only=True)
+  asset_id = serializers.IntegerField(source="asset.id", read_only=True)
 
   class Meta:
-    model = StockPrice
+    model = AssetPrice
     fields = (
         "id",
-        "stock",
+        "asset",
+        "asset_id",
         "symbol",
         "date",
         "open",
@@ -36,6 +48,33 @@ class StockPriceSerializer(serializers.ModelSerializer):
         "close",
         "adjusted_close",
         "volume",
+        "source",
         "created_at",
+        "updated_at",
     )
-    read_only_fields = ("id", "symbol", "created_at")
+    read_only_fields = ("id", "asset_id", "symbol", "created_at", "updated_at")
+
+
+class ChartAssetPriceSerializer(serializers.ModelSerializer):
+  symbol = serializers.CharField(source="asset.symbol", read_only=True)
+  asset_id = serializers.IntegerField(source="asset.id", read_only=True)
+
+  class Meta:
+    model = AssetPrice
+    fields = (
+        "asset_id",
+        "symbol",
+        "date",
+        "open",
+        "high",
+        "low",
+        "close",
+        "adjusted_close",
+        "volume",
+        "source",
+    )
+
+
+# Backwards-compatible aliases for code that still imports stock serializers.
+StockSerializer = AssetSerializer
+StockPriceSerializer = AssetPriceSerializer

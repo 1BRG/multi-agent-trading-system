@@ -11,7 +11,7 @@ class BacktestRun(models.Model):
 
   user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="backtest_runs")
   strategy = models.ForeignKey("strategies.Strategy", on_delete=models.CASCADE, related_name="backtest_runs")
-  stock = models.ForeignKey("market.Stock", on_delete=models.CASCADE, related_name="backtest_runs")
+  stock = models.ForeignKey("market.Asset", on_delete=models.CASCADE, related_name="backtest_runs")
   start_date = models.DateField()
   end_date = models.DateField()
   initial_cash = models.DecimalField(max_digits=14, decimal_places=2, default=10000)

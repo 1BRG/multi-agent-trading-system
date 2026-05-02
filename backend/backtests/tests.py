@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from market.models import Stock
+from market.models import Asset
 from strategies.models import Strategy
 
 User = get_user_model()
@@ -12,7 +12,7 @@ class BacktestApiTests(TestCase):
   def test_backtest_requires_own_or_public_strategy(self):
     owner = User.objects.create_user(username="owner", email="owner@example.com", password="password123")
     other = User.objects.create_user(username="other", email="other@example.com", password="password123")
-    stock = Stock.objects.create(symbol="AAPL", name="Apple Inc.")
+    stock = Asset.objects.get(symbol="AAPL")
     private_strategy = Strategy.objects.create(owner=other, name="Private", config={}, is_public=False)
     public_strategy = Strategy.objects.create(owner=other, name="Public", config={}, is_public=True)
 
