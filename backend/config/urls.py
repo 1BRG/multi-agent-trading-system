@@ -23,11 +23,14 @@ from conversations.views import (
     DebateSessionViewSet,
 )
 from market.views import AssetListAPIView, AssetPricesAPIView, AssetPriceViewSet, AssetViewSet
+from portfolios.views import PortfolioHoldingViewSet, PortfolioViewSet
 from strategies.views import StrategyViewSet
 
 router = DefaultRouter(trailing_slash=False)
 router.register("assets", AssetViewSet, basename="asset")
 router.register("asset-prices", AssetPriceViewSet, basename="asset-price")
+router.register("portfolios", PortfolioViewSet, basename="portfolio")
+router.register("portfolio-holdings", PortfolioHoldingViewSet, basename="portfolio-holding")
 router.register("strategies", StrategyViewSet, basename="strategy")
 router.register("backtests", BacktestRunViewSet, basename="backtest")
 router.register("chats", ChatThreadViewSet, basename="chat")

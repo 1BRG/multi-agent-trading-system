@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "accounts",
     "market",
+    "portfolios",
     "strategies",
     "backtests",
     "conversations",

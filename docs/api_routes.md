@@ -113,6 +113,46 @@ The backend also applies safety limits:
 - Asset symbols are validated before querying.
 - Price reads use Django ORM filters, not raw SQL.
 
+## Portfolios
+
+Portfolio endpoints require a bearer token and are scoped to the current user.
+
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `GET` | `/portfolios` | Bearer token | Lists current user's portfolios, including nested holdings. |
+| `POST` | `/portfolios` | Bearer token | Creates a portfolio for the current user. |
+| `GET` | `/portfolios/{portfolio_id}` | Bearer token | Returns one owned portfolio with holdings. |
+| `PATCH` | `/portfolios/{portfolio_id}` | Bearer token | Updates one owned portfolio. |
+| `DELETE` | `/portfolios/{portfolio_id}` | Bearer token | Deletes one owned portfolio. |
+| `GET` | `/portfolio-holdings` | Bearer token | Lists holdings from current user's portfolios. |
+| `POST` | `/portfolio-holdings` | Bearer token | Adds a holding to one owned portfolio. |
+| `GET` | `/portfolio-holdings/{holding_id}` | Bearer token | Returns one owned holding. |
+| `PATCH` | `/portfolio-holdings/{holding_id}` | Bearer token | Updates one owned holding. |
+| `DELETE` | `/portfolio-holdings/{holding_id}` | Bearer token | Deletes one owned holding. |
+
+Create portfolio payload:
+
+```json
+{
+  "name": "Core Portfolio",
+  "cash": "2500.00",
+  "base_currency": "USD",
+  "description": "Long-term holdings"
+}
+```
+
+Create holding payload:
+
+```json
+{
+  "portfolio": 1,
+  "asset": 1,
+  "target_weight": "0.2500",
+  "quantity": "10.00000000",
+  "average_cost": "185.000000"
+}
+```
+
 ## Router Endpoints
 
 These endpoints are registered through DRF's router without trailing slash.
@@ -121,6 +161,8 @@ These endpoints are registered through DRF's router without trailing slash.
 | --- | --- | --- |
 | `/assets` | Read public, write admin | Asset CRUD for available symbols. |
 | `/asset-prices` | Read public, write admin | Historical OHLCV prices, filterable by `symbol`. |
+| `/portfolios` | Bearer token | Current user's portfolios and nested holdings. |
+| `/portfolio-holdings` | Bearer token | Holdings scoped to current user's portfolios. |
 | `/strategies` | Bearer token | User-owned strategies plus public strategies. |
 | `/backtests` | Bearer token | Current user's backtest runs and JSON results. |
 | `/chats` | Bearer token | Current user's chat threads. |

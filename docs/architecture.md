@@ -17,7 +17,7 @@ The current implementation uses Django models and Django migrations for schema m
 | --- | --- | --- |
 | `frontend` | Next.js / React | User interface, auth screens, sidebar workspace, Stocks UI. |
 | `backend` | Django REST Framework | Auth, CRUD APIs, market data APIs, domain APIs. |
-| `postgres` | PostgreSQL 15 | Stores users, assets, prices, strategies, backtests and conversations. |
+| `postgres` | PostgreSQL 15 | Stores users, assets, prices, portfolios, strategies, backtests and conversations. |
 | `ollama` | Ollama | Reserved for local AI workflows. Real AI orchestration is still pending. |
 
 ## Backend
@@ -26,6 +26,7 @@ The backend is organized into Django apps:
 
 - `accounts`: custom user model, register/login, JWT auth, profile updates, password changes, Google/GitHub OAuth callbacks.
 - `market`: assets and daily OHLCV market prices.
+- `portfolios`: user portfolios and holdings linked to supported assets.
 - `strategies`: user-owned or public strategy definitions.
 - `backtests`: backtest run records and JSON result storage.
 - `conversations`: strategy chats and debate sessions/messages.
@@ -56,6 +57,7 @@ Implemented workspace areas:
 - Auth callback pages for Google/GitHub OAuth.
 - Logged-in dashboard with persistent left sidebar.
 - Stocks page with asset list and selected-asset price details.
+- Portfolio page for creating user portfolios and managing holdings.
 - Placeholder pages for Backtesting, Strategy chat, Debate mode and Settings.
 - Profile page embedded through the sidebar user menu.
 
@@ -67,7 +69,7 @@ The backend exposes:
 
 - Explicit auth endpoints under `/auth/...`.
 - Explicit market data endpoints under `/api/assets...`.
-- DRF router endpoints for assets, asset prices, strategies, backtests, chats, debate sessions and admin user management.
+- DRF router endpoints for assets, asset prices, portfolios, portfolio holdings, strategies, backtests, chats, debate sessions and admin user management.
 
 See `docs/api_routes.md` for route details.
 

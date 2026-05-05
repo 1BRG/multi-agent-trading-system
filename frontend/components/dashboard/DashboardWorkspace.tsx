@@ -53,6 +53,7 @@ interface DashboardWorkspaceProps {
 function isWorkspaceMode(value: unknown): value is WorkspaceMode {
   return (
     value === "stocks" ||
+    value === "portfolio" ||
     value === "backtesting" ||
     value === "strategy" ||
     value === "debate" ||

@@ -6,7 +6,14 @@ import type { MouseEvent } from "react";
 import type { User } from "../../types/auth";
 import { UserMenu } from "./UserMenu";
 
-export type WorkspaceMode = "stocks" | "backtesting" | "strategy" | "debate" | "profile" | "settings";
+export type WorkspaceMode =
+  | "stocks"
+  | "portfolio"
+  | "backtesting"
+  | "strategy"
+  | "debate"
+  | "profile"
+  | "settings";
 export type ChatCategory = "debate" | "strategy";
 
 export interface ChatHistoryItem {
@@ -96,6 +103,13 @@ export function Sidebar({
           type="button"
         >
           Stocks
+        </button>
+        <button
+          className={activeMode === "portfolio" ? "sidebar-nav-item active" : "sidebar-nav-item"}
+          onClick={() => onModeChange("portfolio")}
+          type="button"
+        >
+          Portfolio
         </button>
         <button
           className={activeMode === "backtesting" ? "sidebar-nav-item active" : "sidebar-nav-item"}

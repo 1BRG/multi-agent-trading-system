@@ -1,5 +1,6 @@
 import { BacktestingPage } from "./BacktestingPage";
 import { DebatePage } from "./DebatePage";
+import { PortfolioPage } from "./PortfolioPage";
 import { SettingsPlaceholderPage } from "./SettingsPlaceholderPage";
 import { StocksPage } from "./StocksPage";
 import { StrategyChatPage } from "./StrategyChatPage";
@@ -18,6 +19,10 @@ export function MainContent({ activeChat, activeMode }: MainContentProps) {
 
   if (activeMode === "backtesting") {
     return <BacktestingPage />;
+  }
+
+  if (activeMode === "portfolio") {
+    return <PortfolioPage />;
   }
 
   if (activeMode === "debate") {

@@ -102,6 +102,8 @@ Prices are downloaded by Django management commands and stored in PostgreSQL.
   - users/accounts
   - assets
   - asset prices
+  - user portfolios
+  - portfolio holdings
   - strategies
   - backtest runs
   - chat threads/messages
@@ -129,6 +131,7 @@ Prices are downloaded by Django management commands and stored in PostgreSQL.
 - Persistent ChatGPT-like left sidebar after login.
 - Sidebar sections:
   - Stocks
+  - Portfolio
   - Backtesting
   - Debate history
   - Strategy history
@@ -162,6 +165,14 @@ Prices are downloaded by Django management commands and stored in PostgreSQL.
 - Price API requests are limited to safe date ranges and validated symbols.
 - OHLCV rows are prepared for future line charts and candlestick charts.
 
+### Portfolios
+
+- Authenticated users can create, update, list and delete their own portfolios.
+- Portfolio holdings are linked to supported assets from the `assets` table.
+- Holdings store target weight, optional quantity and optional average cost.
+- Portfolio APIs are scoped to the current user, so one user cannot read or edit another user's portfolios.
+- Portfolio page in the logged-in sidebar for creating portfolios and adding/removing holdings.
+
 ---
 
 ## API Endpoints
@@ -177,6 +188,10 @@ PATCH  /users/me
 DELETE /users/me
 GET    /api/assets
 GET    /api/assets/{symbol}/prices?start=YYYY-MM-DD&end=YYYY-MM-DD
+GET    /portfolios
+POST   /portfolios
+GET    /portfolio-holdings
+POST   /portfolio-holdings
 ```
 
 More route details are available in:

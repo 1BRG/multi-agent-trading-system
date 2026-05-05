@@ -97,6 +97,52 @@ Constraints and indexes:
 - Unique constraint: `asset_prices_asset_date_unique` on `(asset_id, date)`.
 - Index: `asset_prices_asset_date_idx` on `(asset_id, date)`.
 
+## Portfolios
+
+Tables:
+
+- `portfolios`
+- `portfolio_holdings`
+
+Portfolios are private to the authenticated user that owns them. Holdings reference rows from `assets`, so portfolio data can later be joined with locally stored prices for dashboards and backtests.
+
+### `portfolios`
+
+| Column | Type | Constraints | Description |
+| --- | --- | --- | --- |
+| `id` | integer | primary key | Internal portfolio id. |
+| `user_id` | integer | FK to `accounts_user`, unique with `name` | Portfolio owner. |
+| `name` | varchar(255) | unique with `user_id` | Portfolio name. |
+| `cash` | decimal(14, 2) | default `0` | Cash balance tracked for the portfolio. |
+| `base_currency` | varchar(10) | default `USD` | Portfolio reporting currency. |
+| `description` | text | blank allowed | Optional description. |
+| `created_at` | timestamp with timezone | not null | Creation timestamp. |
+| `updated_at` | timestamp with timezone | not null | Last update timestamp. |
+
+Constraints and indexes:
+
+- Unique constraint: `portfolio_user_name_unique` on `(user_id, name)`.
+- Index: `portfolio_user_name_idx` on `(user_id, name)`.
+
+### `portfolio_holdings`
+
+| Column | Type | Constraints | Description |
+| --- | --- | --- | --- |
+| `id` | integer | primary key | Internal holding id. |
+| `portfolio_id` | integer | FK to `portfolios`, unique with `asset_id` | Parent portfolio. |
+| `asset_id` | integer | FK to `assets`, unique with `portfolio_id` | Held asset. |
+| `target_weight` | decimal(6, 4) | between `0` and `1` | Intended allocation weight, for example `0.2500` for 25%. |
+| `quantity` | decimal(20, 8) | nullable | Optional tracked units/shares. |
+| `average_cost` | decimal(18, 6) | nullable | Optional average entry cost. |
+| `created_at` | timestamp with timezone | not null | Creation timestamp. |
+| `updated_at` | timestamp with timezone | not null | Last update timestamp. |
+
+Constraints and indexes:
+
+- Unique constraint: `pf_hold_port_asset_uniq` on `(portfolio_id, asset_id)`.
+- Check constraint: `pf_hold_weight_range` keeps `target_weight` between `0` and `1`.
+- Index: `pf_hold_port_asset_idx` on `(portfolio_id, asset_id)`.
+
 ## Strategies
 
 Table: `strategies_strategy`

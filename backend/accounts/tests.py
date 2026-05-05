@@ -164,6 +164,8 @@ class PrivateRouteAuthTests(TestCase):
         ("PATCH", "/users/me"),
         ("PATCH", "/users/me/password"),
         ("GET", "/users"),
+        ("GET", "/portfolios"),
+        ("GET", "/portfolio-holdings"),
         ("GET", "/strategies"),
         ("GET", "/backtests"),
         ("GET", "/chats"),
