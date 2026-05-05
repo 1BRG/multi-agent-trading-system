@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { apiRequest } from "../../../../lib/api";
-import { setAccessToken } from "../../../../lib/auth";
+import { clearStoredAppState, setAccessToken } from "../../../../lib/auth";
 import type { AuthResponse } from "../../../../types/auth";
 
 export default function SocialAuthCallbackPage() {
@@ -43,6 +43,7 @@ export default function SocialAuthCallbackPage() {
           body: { code, state },
         });
         window.sessionStorage.removeItem(`ai_stock_lab_oauth_${provider}_state`);
+        clearStoredAppState();
         setAccessToken(response.access_token);
         router.replace("/dashboard");
         router.refresh();

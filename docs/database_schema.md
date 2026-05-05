@@ -2,43 +2,69 @@
 
 ## Overview
 
-This document describes the PostgreSQL schema managed by Django migrations.
+The database is PostgreSQL and the schema is managed by Django models plus Django migrations.
+
+The active backend is Django REST Framework. FastAPI, SQLAlchemy and Alembic are not used by the current implementation.
+
+Historical market prices are stored in PostgreSQL and populated through Django management commands.
 
 ## Users
 
-Table: `accounts_user`.
+Table: `accounts_user`
+
+Custom user model based on Django `AbstractUser`.
 
 | Column | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `id` | integer | primary key, indexed | Internal user id. |
-| `username` | varchar(150) | unique, case-insensitive unique constraint | Login identifier. |
+| `id` | integer | primary key | Internal user id. |
+| `username` | varchar(150) | unique, case-insensitive unique constraint | Username and login identifier. |
 | `email` | varchar(254) | unique, case-insensitive unique constraint | Normalized lowercase email address. |
 | `password` | varchar(128) | not null | Django-managed password hash. |
 | `full_name` | varchar(255) | blank allowed | Optional display name. |
 | `profile_photo` | varchar(100) | blank allowed | Uploaded profile photo path under Django media storage. |
-| `role` | varchar(50) | not null | Authorization role, currently `user` or `admin`. |
-| `is_active` | boolean | not null | Soft-delete/deactivation flag. |
+| `role` | varchar(50) | `user` / `admin` | Application role. |
+| `is_active` | boolean | not null | Deactivated users cannot authenticate. |
+| `is_staff` | boolean | not null | Django admin access flag. |
+| `is_superuser` | boolean | not null | Django superuser flag. |
 | `last_login` | timestamp with timezone | nullable | Last successful login timestamp. |
 | `date_joined` | timestamp with timezone | not null | Django account creation timestamp. |
 | `created_at` | timestamp with timezone | not null | Creation timestamp. |
 | `updated_at` | timestamp with timezone | not null | Last update timestamp. |
 
+Constraints:
+
+- `accounts_user_email_ci_unique`
+- `accounts_user_username_ci_unique`
+
+Login accepts either username or email through the `identifier` field.
+
 ## Market Data
 
 Tables:
-- `assets`: symbols, names, asset type, sector, exchange, currency, active flag.
-- `asset_prices`: local daily OHLCV historical prices from 2010-01-01 onward, unique on `(asset_id, date)` and indexed on `(asset_id, date)`.
 
-Initial supported assets:
-- Stocks: `AAPL`, `MSFT`, `GOOGL`, `AMZN`, `NVDA`, `TSLA`, `META`, `JPM`, `KO`, `WMT`.
-- ETFs: `SPY`, `QQQ`, `GLD`.
-- Commodities: `GC=F`.
+- `assets`
+- `asset_prices`
 
-Table: `assets`.
+Supported assets seeded by migration:
+
+- Stocks: `AAPL`, `MSFT`, `GOOGL`, `AMZN`, `NVDA`, `TSLA`, `META`, `JPM`, `KO`, `WMT`
+- ETFs: `SPY`, `QQQ`, `GLD`
+- Commodity-related: `GC=F`
+
+Historical prices are downloaded by Django management commands:
+
+```bash
+python manage.py import_historical_market_data
+python manage.py update_market_data
+```
+
+The importer uses `2010-01-01` as the default historical start date. The update command only downloads missing dates after the latest stored row for each asset.
+
+### `assets`
 
 | Column | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `id` | integer | primary key, indexed | Internal asset id. |
+| `id` | integer | primary key | Internal asset id. |
 | `symbol` | varchar(24) | unique | Provider symbol, normalized uppercase. |
 | `name` | varchar(255) | not null | Human-readable asset name. |
 | `asset_type` | varchar(20) | `stock` / `etf` / `commodity` | Asset category. |
@@ -49,11 +75,11 @@ Table: `assets`.
 | `created_at` | timestamp with timezone | not null | Creation timestamp. |
 | `updated_at` | timestamp with timezone | not null | Last update timestamp. |
 
-Table: `asset_prices`.
+### `asset_prices`
 
 | Column | Type | Constraints | Description |
 | --- | --- | --- | --- |
-| `id` | integer | primary key, indexed | Internal price row id. |
+| `id` | integer | primary key | Internal price row id. |
 | `asset_id` | integer | FK to `assets`, unique with `date` | Asset being priced. |
 | `date` | date | unique with `asset_id`, indexed | Trading date. |
 | `open` | decimal(18, 6) | not null | Daily open. |
@@ -62,15 +88,106 @@ Table: `asset_prices`.
 | `close` | decimal(18, 6) | not null | Daily close. |
 | `adjusted_close` | decimal(18, 6) | nullable | Adjusted daily close. |
 | `volume` | bigint | default `0` | Daily volume. |
-| `source` | varchar(50) | default `yahoo` | Data provider/source. |
+| `source` | varchar(50) | default `yahoo` | Data provider/source label. |
 | `created_at` | timestamp with timezone | not null | Creation timestamp. |
 | `updated_at` | timestamp with timezone | not null | Last update timestamp. |
 
-## User-Owned Domain Tables
+Constraints and indexes:
 
-- `strategies_strategy`: owner, name, description, JSON config, source `manual`/`ai`, public flag.
-- `backtests_backtestrun`: user, strategy, stock, date range, initial cash, status, metrics JSON, equity curve JSON, trades JSON.
-- `conversations_chatthread`: user chat sessions, optional stock context.
-- `conversations_chatmessage`: chat messages with role and metadata JSON.
-- `conversations_debatesession`: user AI debate sessions, optional stock context and status.
-- `conversations_debatemessage`: debate agent messages with agent name, role and round number.
+- Unique constraint: `asset_prices_asset_date_unique` on `(asset_id, date)`.
+- Index: `asset_prices_asset_date_idx` on `(asset_id, date)`.
+
+## Strategies
+
+Table: `strategies_strategy`
+
+| Column | Type | Constraints | Description |
+| --- | --- | --- | --- |
+| `id` | integer | primary key | Internal strategy id. |
+| `owner_id` | integer | FK to `accounts_user` | User that owns the strategy. |
+| `name` | varchar(255) | not null | Strategy name. |
+| `description` | text | blank allowed | Optional description. |
+| `config` | jsonb | default `{}` | Strategy parameters/rules. |
+| `source` | varchar(20) | `manual` / `ai` | How the strategy was created. |
+| `is_public` | boolean | default `false` | Whether other users can see it. |
+| `created_at` | timestamp with timezone | not null | Creation timestamp. |
+| `updated_at` | timestamp with timezone | not null | Last update timestamp. |
+
+Index:
+
+- `strategy_owner_public_idx` on `(owner_id, is_public)`.
+
+## Backtests
+
+Table: `backtests_backtestrun`
+
+| Column | Type | Constraints | Description |
+| --- | --- | --- | --- |
+| `id` | integer | primary key | Internal backtest id. |
+| `user_id` | integer | FK to `accounts_user` | User that ran the backtest. |
+| `strategy_id` | integer | FK to `strategies_strategy` | Strategy being tested. |
+| `stock_id` | integer | FK to `assets` | Asset being tested. Field name remains `stock` in code for compatibility. |
+| `start_date` | date | not null | Backtest start date. |
+| `end_date` | date | not null | Backtest end date. |
+| `initial_cash` | decimal(14, 2) | default `10000` | Starting cash amount. |
+| `status` | varchar(20) | `pending` / `running` / `completed` / `failed` | Backtest status. |
+| `metrics` | jsonb | default `{}` | Summary metrics such as return, Sharpe, drawdown and win rate. |
+| `equity_curve` | jsonb | default `[]` | Equity curve points for charting. |
+| `trades` | jsonb | default `[]` | Trade records for dashboard display. |
+| `error_message` | text | blank allowed | Failure reason if status is `failed`. |
+| `created_at` | timestamp with timezone | not null | Creation timestamp. |
+| `updated_at` | timestamp with timezone | not null | Last update timestamp. |
+
+Indexes:
+
+- `backtest_user_status_idx` on `(user_id, status)`.
+- `backtest_strategy_stock_idx` on `(strategy_id, stock_id)`.
+
+## Conversations
+
+### `conversations_chatthread`
+
+| Column | Type | Constraints | Description |
+| --- | --- | --- | --- |
+| `id` | integer | primary key | Internal chat thread id. |
+| `user_id` | integer | FK to `accounts_user` | Owner. |
+| `stock_id` | integer | nullable FK to `assets` | Optional asset context. Field name remains `stock` in code for compatibility. |
+| `title` | varchar(255) | not null | Thread title. |
+| `created_at` | timestamp with timezone | not null | Creation timestamp. |
+| `updated_at` | timestamp with timezone | not null | Last update timestamp. |
+
+### `conversations_chatmessage`
+
+| Column | Type | Constraints | Description |
+| --- | --- | --- | --- |
+| `id` | integer | primary key | Internal message id. |
+| `thread_id` | integer | FK to `conversations_chatthread` | Parent chat thread. |
+| `role` | varchar(20) | `user` / `assistant` / `system` | Message role. |
+| `content` | text | not null | Message content. |
+| `metadata` | jsonb | default `{}` | Optional structured metadata. |
+| `created_at` | timestamp with timezone | not null | Creation timestamp. |
+
+### `conversations_debatesession`
+
+| Column | Type | Constraints | Description |
+| --- | --- | --- | --- |
+| `id` | integer | primary key | Internal debate id. |
+| `user_id` | integer | FK to `accounts_user` | Owner. |
+| `stock_id` | integer | nullable FK to `assets` | Optional asset context. Field name remains `stock` in code for compatibility. |
+| `topic` | varchar(255) | not null | Debate topic. |
+| `status` | varchar(20) | `pending` / `running` / `completed` / `failed` | Debate status. |
+| `summary` | text | blank allowed | Optional debate summary. |
+| `created_at` | timestamp with timezone | not null | Creation timestamp. |
+| `updated_at` | timestamp with timezone | not null | Last update timestamp. |
+
+### `conversations_debatemessage`
+
+| Column | Type | Constraints | Description |
+| --- | --- | --- | --- |
+| `id` | integer | primary key | Internal debate message id. |
+| `session_id` | integer | FK to `conversations_debatesession` | Parent debate session. |
+| `agent_name` | varchar(100) | not null | Display name of the agent. |
+| `agent_role` | varchar(50) | not null | Agent role, for example bullish, bearish or risk. |
+| `round_number` | integer | default `1` | Debate round number. |
+| `content` | text | not null | Agent message content. |
+| `created_at` | timestamp with timezone | not null | Creation timestamp. |

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { apiRequest } from "../../lib/api";
-import { setAccessToken } from "../../lib/auth";
+import { clearStoredAppState, setAccessToken } from "../../lib/auth";
 import type { AuthResponse, RegisterPayload } from "../../types/auth";
 import { SocialLoginButtons } from "./SocialLoginButtons";
 
@@ -14,7 +14,6 @@ export function RegisterForm() {
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -23,11 +22,12 @@ export function RegisterForm() {
     setError(null);
     setIsSubmitting(true);
 
+    const formData = new FormData(event.currentTarget);
     const payload: RegisterPayload = {
       identifier: username,
       username,
       email,
-      password,
+      password: String(formData.get("password") ?? ""),
       full_name: fullName.trim() || undefined,
     };
 
@@ -37,6 +37,7 @@ export function RegisterForm() {
         auth: false,
         body: payload,
       });
+      clearStoredAppState();
       setAccessToken(response.access_token);
       router.push("/dashboard");
       router.refresh();
@@ -92,10 +93,8 @@ export function RegisterForm() {
           autoComplete="new-password"
           minLength={8}
           name="password"
-          onChange={(event) => setPassword(event.target.value)}
           required
           type="password"
-          value={password}
         />
       </label>
 

@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { apiRequest } from "../../lib/api";
-import { setAccessToken } from "../../lib/auth";
+import { clearStoredAppState, setAccessToken } from "../../lib/auth";
 import type { AuthResponse, LoginPayload } from "../../types/auth";
 import { SocialLoginButtons } from "./SocialLoginButtons";
 
 export function LoginForm() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -21,7 +20,11 @@ export function LoginForm() {
     setError(null);
     setIsSubmitting(true);
 
-    const payload: LoginPayload = { identifier, password };
+    const formData = new FormData(event.currentTarget);
+    const payload: LoginPayload = {
+      identifier,
+      password: String(formData.get("password") ?? ""),
+    };
 
     try {
       const response = await apiRequest<AuthResponse>("/auth/login", {
@@ -29,6 +32,7 @@ export function LoginForm() {
         auth: false,
         body: payload,
       });
+      clearStoredAppState();
       setAccessToken(response.access_token);
       router.push("/dashboard");
       router.refresh();
@@ -58,10 +62,8 @@ export function LoginForm() {
         <input
           autoComplete="current-password"
           name="password"
-          onChange={(event) => setPassword(event.target.value)}
           required
           type="password"
-          value={password}
         />
       </label>
 

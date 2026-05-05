@@ -85,6 +85,8 @@ Recommended update strategy: run `update_market_data` as a scheduled job after m
 
 Do not run the update command on every login, because it can slow down authentication and may hit external API limits.
 
+Prices are downloaded by Django management commands and stored in PostgreSQL.
+
 ---
 
 ## Implemented Features
@@ -154,9 +156,10 @@ Do not run the update command on every login, because it can slow down authentic
 - Backend reads stored market data from PostgreSQL.
 - Stocks UI lists all supported assets.
 - Selecting an asset opens a details panel.
-- Date range selector for price data.
+- Date range selector for price data, defaulting to the last month.
 - Details panel can be closed with a small `x` button.
-- Dates are displayed as `YYYY/M/D`.
+- Dates are displayed as `zz/ll/aaaa`.
+- Price API requests are limited to safe date ranges and validated symbols.
 - OHLCV rows are prepared for future line charts and candlestick charts.
 
 ---

@@ -13,12 +13,6 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
 const volumeFormatter = new Intl.NumberFormat("en-US");
 const STOCKS_STORAGE_KEY = "ai-stock-lab-stocks-state";
 
-interface StoredStocksState {
-  endDate?: string;
-  selectedSymbol?: string | null;
-  startDate?: string;
-}
-
 function formatDateForApi(date: Date) {
   return date.toISOString().slice(0, 10);
 }
@@ -44,29 +38,35 @@ function formatDateForDisplay(value: string | null | undefined) {
     return value;
   }
 
-  return `${year}/${Number(month)}/${Number(day)}`;
+  return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
 }
 
-function readStoredStocksState(): StoredStocksState | null {
-  if (typeof window === "undefined") {
+function parseDisplayDate(value: string) {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) {
+    return "";
+  }
+
+  const match = trimmedValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) {
     return null;
   }
 
-  try {
-    const storedValue = window.localStorage.getItem(STOCKS_STORAGE_KEY);
-    if (!storedValue) {
-      return null;
-    }
+  const [, day, month, year] = match;
+  const dayNumber = Number(day);
+  const monthNumber = Number(month);
+  const yearNumber = Number(year);
+  const parsedDate = new Date(yearNumber, monthNumber - 1, dayNumber);
 
-    const parsed = JSON.parse(storedValue) as Record<string, unknown>;
-    return {
-      endDate: typeof parsed.endDate === "string" ? parsed.endDate : undefined,
-      selectedSymbol: typeof parsed.selectedSymbol === "string" ? parsed.selectedSymbol : null,
-      startDate: typeof parsed.startDate === "string" ? parsed.startDate : undefined,
-    };
-  } catch {
+  if (
+    parsedDate.getFullYear() !== yearNumber ||
+    parsedDate.getMonth() !== monthNumber - 1 ||
+    parsedDate.getDate() !== dayNumber
+  ) {
     return null;
   }
+
+  return `${year}-${String(monthNumber).padStart(2, "0")}-${String(dayNumber).padStart(2, "0")}`;
 }
 
 function buildPricePath(symbol: string, startDate: string, endDate: string) {
@@ -89,9 +89,87 @@ function formatPrice(value: string | null | undefined) {
   return priceFormatter.format(Number(value));
 }
 
+function readStoredSelectedSymbol() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage.getItem(STOCKS_STORAGE_KEY);
+}
+
+interface DatePickerFieldProps {
+  label: string;
+  onChange: (value: string) => void;
+  value: string;
+}
+
+function DatePickerField({ label, onChange, value }: DatePickerFieldProps) {
+  const [displayValue, setDisplayValue] = useState(formatDateForDisplay(value));
+
+  useEffect(() => {
+    setDisplayValue(formatDateForDisplay(value));
+  }, [value]);
+
+  function handleTextChange(nextValue: string) {
+    setDisplayValue(nextValue);
+    const parsedDate = parseDisplayDate(nextValue);
+    if (parsedDate !== null) {
+      onChange(parsedDate);
+    }
+  }
+
+  function handleBlur() {
+    const parsedDate = parseDisplayDate(displayValue);
+    if (parsedDate) {
+      setDisplayValue(formatDateForDisplay(parsedDate));
+      return;
+    }
+
+    if (!displayValue.trim()) {
+      onChange("");
+      return;
+    }
+
+    onChange("");
+  }
+
+  return (
+    <label>
+      <span>{label}</span>
+      <div className="date-picker-control">
+        <input
+          aria-label={label}
+          inputMode="numeric"
+          onBlur={handleBlur}
+          onChange={(event) => handleTextChange(event.target.value)}
+          placeholder="zz/ll/aaaa"
+          type="text"
+          value={displayValue}
+        />
+        <span className="date-picker-calendar" title="Open calendar">
+          <svg
+            aria-hidden="true"
+            focusable="false"
+            viewBox="0 0 16 16"
+          >
+            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
+          </svg>
+          <input
+            aria-label={`${label} calendar`}
+            lang="ro-RO"
+            onChange={(event) => onChange(event.target.value)}
+            tabIndex={-1}
+            type="date"
+            value={value}
+          />
+        </span>
+      </div>
+    </label>
+  );
+}
+
 export function StocksPage() {
   const defaultDateRange = useMemo(getDefaultDateRange, []);
-  const [hasLoadedStoredState, setHasLoadedStoredState] = useState(false);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -119,18 +197,23 @@ export function StocksPage() {
   }, []);
 
   useEffect(() => {
-    const storedState = readStoredStocksState();
-    if (storedState) {
-      setSelectedSymbol(storedState.selectedSymbol ?? null);
-      if (storedState.startDate) {
-        setStartDate(storedState.startDate);
-      }
-      if (storedState.endDate) {
-        setEndDate(storedState.endDate);
-      }
+    if (typeof window !== "undefined") {
+      setSelectedSymbol(readStoredSelectedSymbol());
     }
-    setHasLoadedStoredState(true);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (selectedSymbol) {
+      window.localStorage.setItem(STOCKS_STORAGE_KEY, selectedSymbol);
+      return;
+    }
+
+    window.localStorage.removeItem(STOCKS_STORAGE_KEY);
+  }, [selectedSymbol]);
 
   useEffect(() => {
     if (!selectedSymbol) {
@@ -141,7 +224,7 @@ export function StocksPage() {
 
     if (!startDate || !endDate) {
       setSelectedPrices([]);
-      setPricesError("Use date format YYYY/M/D.");
+      setPricesError("Use date format zz/ll/aaaa.");
       return;
     }
 
@@ -186,21 +269,6 @@ export function StocksPage() {
       ignore = true;
     };
   }, [endDate, selectedSymbol, startDate]);
-
-  useEffect(() => {
-    if (!hasLoadedStoredState) {
-      return;
-    }
-
-    window.localStorage.setItem(
-      STOCKS_STORAGE_KEY,
-      JSON.stringify({
-        endDate,
-        selectedSymbol,
-        startDate,
-      }),
-    );
-  }, [endDate, hasLoadedStoredState, selectedSymbol, startDate]);
 
   const filteredAssets = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -304,7 +372,8 @@ export function StocksPage() {
             <p className="eyebrow">Selected asset</p>
             <h2>{`${selectedAsset.symbol} details`}</h2>
             <p className="muted">
-              Choose a day or range to read OHLCV data from the local database.
+              Choose a day or range to read OHLCV data from the local database. The default range
+              is the last month.
             </p>
           </div>
 
@@ -324,22 +393,8 @@ export function StocksPage() {
             </div>
 
             <div className="stock-date-controls">
-              <label>
-                <span>Start date</span>
-                <input
-                  onChange={(event) => setStartDate(event.target.value)}
-                  type="date"
-                  value={startDate}
-                />
-              </label>
-              <label>
-                <span>End date</span>
-                <input
-                  onChange={(event) => setEndDate(event.target.value)}
-                  type="date"
-                  value={endDate}
-                />
-              </label>
+              <DatePickerField label="Start date" onChange={setStartDate} value={startDate} />
+              <DatePickerField label="End date" onChange={setEndDate} value={endDate} />
             </div>
 
           {isLoadingPrices ? <p className="muted">Loading prices...</p> : null}

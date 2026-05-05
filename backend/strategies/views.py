@@ -14,7 +14,7 @@ class IsOwnerOrReadOnlyPublic(permissions.BasePermission):
 
 
 class StrategyViewSet(viewsets.ModelViewSet):
-  permission_classes = [IsOwnerOrReadOnlyPublic]
+  permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnlyPublic]
   serializer_class = StrategySerializer
 
   def get_queryset(self):

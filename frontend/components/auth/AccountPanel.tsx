@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { API_BASE_URL, apiRequest } from "../../lib/api";
-import { clearAccessToken } from "../../lib/auth";
+import { clearAccessToken, clearStoredAppState } from "../../lib/auth";
 import type {
   UpdatePasswordPayload,
   User,
@@ -21,8 +21,6 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,6 +37,7 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
         setFullName(currentUser.full_name);
       } catch {
         clearAccessToken();
+        clearStoredAppState();
         router.replace("/login");
       } finally {
         setIsLoading(false);
@@ -83,9 +82,11 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
     setMessage(null);
     setIsSavingPassword(true);
 
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const payload: UpdatePasswordPayload = {
-      current_password: currentPassword,
-      new_password: newPassword,
+      current_password: String(formData.get("current_password") ?? ""),
+      new_password: String(formData.get("new_password") ?? ""),
     };
 
     try {
@@ -93,8 +94,7 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
         method: "PATCH",
         body: payload,
       });
-      setCurrentPassword("");
-      setNewPassword("");
+      form.reset();
       setMessage("Parola a fost schimbata.");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Password update failed.");
@@ -110,6 +110,7 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
     try {
       await apiRequest<void>("/users/me", { method: "DELETE" });
       clearAccessToken();
+      clearStoredAppState();
       router.replace("/register");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Account deletion failed.");
@@ -204,10 +205,8 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
             <input
               autoComplete="current-password"
               name="current_password"
-              onChange={(event) => setCurrentPassword(event.target.value)}
               required
               type="password"
-              value={currentPassword}
             />
           </label>
           <label className="field">
@@ -216,10 +215,8 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
               autoComplete="new-password"
               minLength={8}
               name="new_password"
-              onChange={(event) => setNewPassword(event.target.value)}
               required
               type="password"
-              value={newPassword}
             />
           </label>
           <button className="primary-button" disabled={isSavingPassword} type="submit">

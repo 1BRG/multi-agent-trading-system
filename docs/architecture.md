@@ -2,17 +2,79 @@
 
 ## Overview
 
-AI Stock Lab is a split frontend/backend application with a PostgreSQL database and local Ollama integration.
+AI Stock Lab is a Docker-based web application with:
+
+- Next.js frontend on port `3000`.
+- Django REST Framework backend on port `8000`.
+- PostgreSQL database on port `5432`.
+- Optional local Ollama service on port `11434`.
+
+The current implementation uses Django models and Django migrations for schema management. FastAPI, SQLAlchemy and Alembic are no longer part of the active backend.
+
+## Runtime Services
+
+| Service | Technology | Purpose |
+| --- | --- | --- |
+| `frontend` | Next.js / React | User interface, auth screens, sidebar workspace, Stocks UI. |
+| `backend` | Django REST Framework | Auth, CRUD APIs, market data APIs, domain APIs. |
+| `postgres` | PostgreSQL 15 | Stores users, assets, prices, strategies, backtests and conversations. |
+| `ollama` | Ollama | Reserved for local AI workflows. Real AI orchestration is still pending. |
 
 ## Backend
 
-The backend is implemented with Django REST Framework. PostgreSQL schema changes are managed through Django migrations. Authentication uses JWT access tokens and a custom Django user model that supports login with either username or email.
+The backend is organized into Django apps:
+
+- `accounts`: custom user model, register/login, JWT auth, profile updates, password changes, Google/GitHub OAuth callbacks.
+- `market`: assets and daily OHLCV market prices.
+- `strategies`: user-owned or public strategy definitions.
+- `backtests`: backtest run records and JSON result storage.
+- `conversations`: strategy chats and debate sessions/messages.
+
+Authentication uses JWT bearer tokens. Login accepts an `identifier` field, which can be either username or email.
+
+## Market Data Flow
+
+Market data is stored in PostgreSQL.
+
+The active flow is:
+
+1. Django migrations create the `assets` and `asset_prices` tables.
+2. A data migration seeds the supported asset list.
+3. `import_historical_market_data` downloads historical daily OHLCV prices from `2010-01-01` until today.
+4. `update_market_data` downloads only missing rows after the latest stored date for each asset.
+5. API endpoints read prices from PostgreSQL.
+6. Future backtests should read local database prices and should not call external market APIs during a run.
 
 ## Frontend
 
-The frontend is a Next.js application that talks to the Django REST API through `NEXT_PUBLIC_API_BASE_URL`.
+The frontend talks to the backend through `NEXT_PUBLIC_API_BASE_URL`.
 
-## TODO
+Implemented workspace areas:
 
-- Define the frontend module boundaries.
-- Define AI workflow orchestration.
+- Landing page.
+- Login/register pages.
+- Auth callback pages for Google/GitHub OAuth.
+- Logged-in dashboard with persistent left sidebar.
+- Stocks page with asset list and selected-asset price details.
+- Placeholder pages for Backtesting, Strategy chat, Debate mode and Settings.
+- Profile page embedded through the sidebar user menu.
+
+The sidebar state is persisted after refresh. The Stocks page keeps the selected asset, but the default date range is the last month to avoid loading all historical prices by default.
+
+## API Surface
+
+The backend exposes:
+
+- Explicit auth endpoints under `/auth/...`.
+- Explicit market data endpoints under `/api/assets...`.
+- DRF router endpoints for assets, asset prices, strategies, backtests, chats, debate sessions and admin user management.
+
+See `docs/api_routes.md` for route details.
+
+## Pending Architecture Work
+
+- Real backtesting engine.
+- Real AI orchestration for Strategy and Debate modes.
+- Persistent frontend chat history connected to database records.
+- Scheduled market data update runner, for example cron or Celery Beat.
+- Production Docker images and production static/media handling.

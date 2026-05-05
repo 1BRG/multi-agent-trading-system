@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { apiRequest } from "../../lib/api";
-import { clearAccessToken } from "../../lib/auth";
+import { clearAccessToken, clearStoredAppState } from "../../lib/auth";
 import type { User } from "../../types/auth";
 import { DashboardWorkspace } from "../dashboard/DashboardWorkspace";
 import type { WorkspaceMode } from "../layout/Sidebar";
@@ -25,6 +25,7 @@ export function DashboardHome({ initialMode = "strategy" }: DashboardHomeProps) 
         setUser(currentUser);
       } catch {
         clearAccessToken();
+        clearStoredAppState();
         router.replace("/login");
       } finally {
         setIsLoading(false);
@@ -36,14 +37,23 @@ export function DashboardHome({ initialMode = "strategy" }: DashboardHomeProps) 
 
   function handleLogout() {
     clearAccessToken();
+    clearStoredAppState();
     router.replace("/");
+  }
+
+  if (isLoading) {
+    return <main className="workspace-main">Loading...</main>;
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (
     <DashboardWorkspace
       initialMode={initialMode}
       onLogout={handleLogout}
-      user={isLoading ? null : user}
+      user={user}
     />
   );
 }

@@ -72,3 +72,16 @@ class MarketModelTests(TestCase):
     self.assertEqual(response.data["asset"]["symbol"], "AAPL")
     self.assertEqual(len(response.data["prices"]), 1)
     self.assertEqual(response.data["prices"][0]["source"], "test")
+
+  def test_asset_prices_api_rejects_invalid_symbol(self):
+    response = APIClient().get("/api/assets/AAPL%27%20OR%201=1/prices")
+
+    self.assertEqual(response.status_code, 400)
+
+  def test_asset_prices_api_rejects_large_date_range(self):
+    allowed_response = APIClient().get("/api/assets/AAPL/prices?start=2021-01-01&end=2025-12-31")
+    response = APIClient().get("/api/assets/AAPL/prices?start=2020-01-01&end=2026-01-01")
+
+    self.assertEqual(allowed_response.status_code, 200)
+    self.assertEqual(response.status_code, 400)
+    self.assertIn("Date range cannot exceed", response.data["detail"])

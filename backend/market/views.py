@@ -1,3 +1,6 @@
+import re
+from datetime import date, timedelta
+
 from django.utils.dateparse import parse_date
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
@@ -5,6 +8,10 @@ from rest_framework.views import APIView
 
 from market.models import Asset, AssetPrice
 from market.serializers import AssetPriceSerializer, AssetSerializer, ChartAssetPriceSerializer
+
+MAX_PRICE_RANGE_DAYS = 365 * 5
+DEFAULT_PRICE_RANGE_DAYS = 31
+SYMBOL_PATTERN = re.compile(r"^[A-Z0-9.=^_-]{1,24}$", re.IGNORECASE)
 
 
 class IsAdminOrReadOnly(permissions.BasePermission):
@@ -45,6 +52,9 @@ class AssetPricesAPIView(APIView):
   permission_classes = [permissions.AllowAny]
 
   def get(self, request, symbol: str):
+    if not SYMBOL_PATTERN.fullmatch(symbol):
+      return Response({"symbol": "Invalid asset symbol."}, status=status.HTTP_400_BAD_REQUEST)
+
     asset = Asset.objects.filter(symbol__iexact=symbol).first()
     if not asset:
       return Response({"detail": "Asset not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -54,14 +64,31 @@ class AssetPricesAPIView(APIView):
     start_date = parse_optional_date(request.query_params.get("start"), "start")
     if isinstance(start_date, Response):
       return start_date
-    if start_date:
-      queryset = queryset.filter(date__gte=start_date)
-
     end_date = parse_optional_date(request.query_params.get("end"), "end")
     if isinstance(end_date, Response):
       return end_date
+
+    if end_date is None:
+      end_date = date.today()
+    if start_date is None:
+      start_date = end_date - timedelta(days=DEFAULT_PRICE_RANGE_DAYS)
+
+    if start_date > end_date:
+      return Response(
+          {"detail": "Start date must be before or equal to end date."},
+          status=status.HTTP_400_BAD_REQUEST,
+      )
+
+    if (end_date - start_date).days > MAX_PRICE_RANGE_DAYS:
+      return Response(
+          {"detail": "Date range cannot exceed 5 years."},
+          status=status.HTTP_400_BAD_REQUEST,
+      )
+
     if end_date:
       queryset = queryset.filter(date__lte=end_date)
+    if start_date:
+      queryset = queryset.filter(date__gte=start_date)
 
     return Response(
         {
