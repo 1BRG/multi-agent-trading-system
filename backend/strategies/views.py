@@ -44,9 +44,9 @@ class StrategyViewSet(viewsets.ModelViewSet):
         except ValueError as e:
             # Catch our custom parsing/LLM errors from ai_service.py
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception:
+        except Exception as e:
             return Response(
-                {"detail": "An unexpected error occurred during AI generation."}, 
+                {"detail": f"Unexpected error: {str(e)}"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
