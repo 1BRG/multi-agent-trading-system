@@ -35,3 +35,22 @@ class BacktestApiTests(TestCase):
 
     self.assertEqual(private_response.status_code, 400)
     self.assertEqual(public_response.status_code, 201)
+
+  def test_cannot_backtest_draft_strategy(self):
+    owner = User.objects.create_user(username="owner2", email="owner2@example.com", password="password123")
+    client = APIClient()
+    client.force_authenticate(owner)
+
+    # create a draft strategy owned by the user
+    from strategies.models import Strategy
+    s = Strategy.objects.create(owner=owner, name="Draft", config={}, source=Strategy.Source.AI, status=Strategy.Status.DRAFT)
+    stock = Asset.objects.get(symbol="AAPL")
+    payload = {
+        "strategy": s.id,
+        "stock": stock.id,
+        "start_date": "2025-01-02",
+        "end_date": "2025-01-02",
+        "initial_cash": "10000.00",
+    }
+    resp = client.post("/backtests", payload, format="json")
+    self.assertEqual(resp.status_code, 400)

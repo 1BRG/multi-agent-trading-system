@@ -3,6 +3,11 @@ from django.db import models
 
 
 class Strategy(models.Model):
+  class Status(models.TextChoices):
+    DRAFT = "draft", "Draft"
+    APPROVED = "approved", "Approved"
+    ARCHIVED = "archived", "Archived"
+
   class Source(models.TextChoices):
     MANUAL = "manual", "Manual"
     AI = "ai", "AI"
@@ -11,7 +16,10 @@ class Strategy(models.Model):
   name = models.CharField(max_length=255)
   description = models.TextField(blank=True)
   config = models.JSONField(default=dict, blank=True)
+  status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
   source = models.CharField(max_length=20, choices=Source.choices, default=Source.MANUAL)
+  # Store the raw LLM response for audit/debugging when a strategy is created via AI
+  raw_llm_response = models.TextField(blank=True)
   is_public = models.BooleanField(default=False)
   created_at = models.DateTimeField(auto_now_add=True)
   updated_at = models.DateTimeField(auto_now=True)

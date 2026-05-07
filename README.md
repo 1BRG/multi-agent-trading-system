@@ -1,8 +1,9 @@
+
 # AI Stock Lab
 
 AI Stock Lab is an AI-assisted stock analysis and backtesting platform.
 
-The application is built with a Next.js frontend, a Django REST Framework backend, a PostgreSQL database, JWT authentication, optional Google/GitHub OAuth login, and planned local Ollama integration for AI-assisted stock analysis workflows.
+The application is built with a Next.js frontend, a Django REST Framework backend, a PostgreSQL database, JWT authentication, optional Google/GitHub OAuth login, and local Ollama integration for AI-assisted stock analysis workflows.
 
 ---
 
@@ -35,19 +36,18 @@ docker compose up --build
 
 The backend container automatically installs dependencies, runs Django migrations, and starts the API server.
 
-### 4. Open the application
+### 4. Download the Local AI Model (Ollama)
+The application uses a local LLM via Docker. To download the Llama3 model into your running Ollama container, open a new terminal window and run:
+```bash
+docker exec -it ai-stock-lab-ollama ollama pull llama3
+```
+*(Wait for the download to say "success" before trying to use the AI in the app).*
+
+### 5. Open the application
 
 - Frontend: `http://localhost:3000`
 - Backend API: `http://localhost:8000`
 - Django admin: `http://localhost:8000/admin`
-
-### 5. Create an admin user
-
-If needed, create a Django admin user:
-
-```bash
-docker compose exec backend python manage.py createsuperuser
-```
 
 ---
 
@@ -63,33 +63,27 @@ docker compose exec backend python manage.py import_historical_market_data
 
 This imports daily OHLCV market data from `2010-01-01` until today for all supported symbols. The process may take some time.
 
-To import data for a single symbol:
-
-```bash
-docker compose exec backend python manage.py import_historical_market_data --symbol AAPL
-```
-
 To update only missing prices after the latest stored date:
 
 ```bash
 docker compose exec backend python manage.py update_market_data
 ```
 
-To update one symbol:
-
-```bash
-docker compose exec backend python manage.py update_market_data --symbol AAPL
-```
-
-Recommended update strategy: run `update_market_data` as a scheduled job after market close, either daily or weekly.
-
-Do not run the update command on every login, because it can slow down authentication and may hit external API limits.
-
-Prices are downloaded by Django management commands and stored in PostgreSQL.
-
 ---
 
 ## Implemented Features
+
+### AI Strategy Generation (The Strategy Manager)
+The platform features a fully integrated **AI Strategy Manager** that translates qualitative natural-language trading ideas into strict, deterministic, mathematical JSON rulesets ready for backtesting.
+
+- **How it works:** 
+  1. Navigate to **Strategy** on the sidebar and click **+ New Chat**.
+  2. Type a trading idea (e.g., *"Aggressive portfolio holding only the top 3 tech stocks, weighted by conviction, and rebalanced daily"*).
+  3. The local LLM processes the prompt and outputs a strict JSON configuration.
+  4. The Django backend parses the output through a strict validation "Firewall" to ensure no hallucinations break the backtesting engine.
+- **The "Frozen Rule" & Approval Workflow:** To prevent Lookahead Bias during backtesting, the AI is only invoked during this brainstorming phase. The generated ruleset is saved permanently to the database as a `DRAFT`. The user must manually review the JSON rules and click **"Approve Strategy"** before the backtester is allowed to execute it.
+- **Persistent Chat History:** Conversations with the Strategy Agent are saved in PostgreSQL, isolated by chat tabs, and auto-named based on your first prompt.
+- **Audit Logging:** The raw text output from the LLM is securely logged in the database (`raw_llm_response`) for prompt debugging and safety auditing.
 
 ### Backend and Database
 
@@ -100,12 +94,9 @@ Prices are downloaded by Django management commands and stored in PostgreSQL.
 - JWT authentication using `djangorestframework-simplejwt`.
 - Database tables for:
   - users/accounts
-  - assets
-  - asset prices
-  - user portfolios
-  - portfolio holdings
-  - strategies
-  - backtest runs
+  - assets & asset prices
+  - user portfolios & portfolio holdings
+  - strategies & backtest runs
   - chat threads/messages
   - debate sessions/messages
 
@@ -114,64 +105,25 @@ Prices are downloaded by Django management commands and stored in PostgreSQL.
 - User registration.
 - Login with email or username.
 - JWT-based authenticated requests.
-- Frontend logout.
-- Current user endpoint.
-- Profile page accessible from the sidebar user menu.
-- Username/profile update support.
-- Password update support.
-- Profile photo field/support.
-- Admin user support through Django admin.
-- Optional Google OAuth login.
-- Optional GitHub OAuth login.
+- Current user endpoint, profile page, and password updates.
 
 ### Layout and Frontend
 
-- Main landing page.
-- Login and register forms.
 - Persistent ChatGPT-like left sidebar after login.
-- Sidebar sections:
-  - Stocks
-  - Portfolio
-  - Backtesting
-  - Debate history
-  - Strategy history
-  - User menu with Profile, Settings, and Log out
-- Separate placeholder pages for:
-  - Backtesting
-  - Strategy chat
-  - Debate mode
-  - Settings
-- Sidebar state persists after refresh.
-- Placeholder chat history for Strategy and Debate sections.
-- Right-click delete support for placeholder conversations.
+- Real chat history persisted in the database for Strategy generation.
+- Right-click delete support for conversations.
+- Separate pages for Stocks, Portfolio, Backtesting, and Settings.
 
 ### Market Data and Stocks
 
-- Supported assets:
-  - Stocks: `AAPL`, `MSFT`, `GOOGL`, `AMZN`, `NVDA`, `TSLA`, `META`, `JPM`, `KO`, `WMT`
-  - ETFs: `SPY`, `QQQ`, `GLD`
-  - Commodity-related: `GC=F`
-- `assets` table.
-- `asset_prices` table.
-- Unique constraint on `asset_id + date`.
-- Historical import script starting from `2010-01-01`.
-- Incremental update script for missing prices.
-- Backend reads stored market data from PostgreSQL.
-- Stocks UI lists all supported assets.
-- Selecting an asset opens a details panel.
-- Date range selector for price data, defaulting to the last month.
-- Details panel can be closed with a small `x` button.
-- Dates are displayed as `zz/ll/aaaa`.
-- Price API requests are limited to safe date ranges and validated symbols.
-- OHLCV rows are prepared for future line charts and candlestick charts.
+- Supported assets: `AAPL`, `MSFT`, `GOOGL`, `AMZN`, `NVDA`, `TSLA`, `META`, `JPM`, `KO`, `WMT`, `SPY`, `QQQ`, `GLD`, `GC=F`.
+- Backend reads stored market data directly from PostgreSQL to prevent live-API calls during backtesting.
+- Stocks UI lists all supported assets with date range selectors.
 
 ### Portfolios
 
-- Authenticated users can create, update, list and delete their own portfolios.
+- Authenticated users can create, update, list and delete their own private portfolios.
 - Portfolio holdings are linked to supported assets from the `assets` table.
-- Holdings store target weight, optional quantity and optional average cost.
-- Portfolio APIs are scoped to the current user, so one user cannot read or edit another user's portfolios.
-- Portfolio page in the logged-in sidebar for creating portfolios and adding/removing holdings.
 
 ---
 
@@ -182,20 +134,15 @@ Important implemented endpoints:
 ```http
 POST   /auth/register
 POST   /auth/login
-GET    /auth/me
-GET    /users/me
-PATCH  /users/me
-DELETE /users/me
 GET    /api/assets
 GET    /api/assets/{symbol}/prices?start=YYYY-MM-DD&end=YYYY-MM-DD
 GET    /portfolios
 POST   /portfolios
-GET    /portfolio-holdings
-POST   /portfolio-holdings
+POST   /strategies/generate_ai       (Generates AI JSON ruleset)
+PATCH  /strategies/{id}/approve      (Approves a Draft strategy for backtesting)
 ```
 
 More route details are available in:
-
 ```text
 docs/api_routes.md
 ```
@@ -204,52 +151,23 @@ docs/api_routes.md
 
 ## Planned Features
 
+### Backtesting Engine
+- Real backtesting engine powered by `vectorbt`.
+- Backtest execution endpoint consuming the approved `Strategy.config` JSON.
+- Results dashboard displaying total return, Sharpe ratio, maximum drawdown, win rate, equity curve, and trade list.
+- Strict enforcement of local PostgreSQL price data usage (no external API calls during a run).
+
+### Debate Mode
+- Debate mode with two AI agents (Bull vs. Bear) discussing a selected stock.
+- A "Judge" LLM that outputs Conviction scores to be consumed by the Strategy Manager.
+
 ### Market Data and Charting
-
 - Candlestick chart component.
-- Line chart for close/adjusted close prices.
-- Better empty-state messages for missing prices.
-- Scheduled market data update runner, for example using cron or Celery Beat.
-- Optional admin UI for adding/removing supported assets.
-
-### Backtesting
-
-- Real backtesting engine.
-- Strategy configuration form.
-- Backtest execution endpoint.
-- Results dashboard with:
-  - total return
-  - Sharpe ratio
-  - maximum drawdown
-  - win rate
-  - equity curve
-  - trade list
-- Backtesting must use PostgreSQL price data, not external API calls.
-
-### AI Features
-
-- Real Strategy chat integration with an LLM.
-- Strategy generation from chat.
-- Debate mode with two AI agents discussing a selected stock.
-- Real chat history persisted in the database instead of placeholder history.
-- Ollama/OpenAI-compatible provider integration through the backend.
-
-### User Experience
-
-- Improved settings page.
-- Improved profile photo upload UI.
-- Loading skeletons for market data.
-- Better error handling for OAuth failures.
-- Responsive polish for small screens.
+- Scheduled market data update runner (e.g., cron or Celery Beat).
 
 ### Production Readiness
-
-- Proper secrets management.
-- Production Docker image builds.
+- Production Docker image builds and proper secrets management.
 - Static files handling for Django admin and media files.
-- CI checks for backend tests and frontend type checking.
-- Scheduled database backups.
-- Rate-limit protection for authentication and external market data imports.
 
 ---
 
@@ -280,3 +198,4 @@ docker compose exec frontend npx tsc --noEmit
 - Database schema: `docs/database_schema.md`
 - API routes: `docs/api_routes.md`
 - Architecture notes: `docs/architecture.md`
+```
