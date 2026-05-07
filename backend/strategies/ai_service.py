@@ -67,16 +67,27 @@ def generate_strategy_rules(user_prompt: str) -> dict:
 # and uncomment this mock to continue testing the API and UI immediately.
 
 # def generate_strategy_rules(user_prompt: str) -> dict:
-#     """Mock response for UI development without needing a running LLM."""
-#     return {
-#         "name": "AI Momentum Generator",
-#         "description": f"A strategy based on: '{user_prompt}'. It buys top conviction stocks.",
+#     """
+#     Mock response to bypass Docker memory crashes.
+#     This guarantees the backend responds instantly!
+#     """
+    
+#     # We simulate a perfect JSON response that passes our Firewall
+#     parsed_config = {
+#         "name": "Aggressive Tech Portfolio",
+#         "description": f"Strategy based on: '{user_prompt}'.",
 #         "config": {
-#             "rebalance_frequency": "weekly",
+#             "rebalance_frequency": "daily",
 #             "ranking_metric": "conviction",
-#             "portfolio_size": 5,
-#             "sizing": "equal_weight",
-#             "sector_cap_pct": 25,
+#             "portfolio_size": 3,
+#             "sizing": "conviction_weighted",
+#             "sector_cap_pct": 100,
 #             "exit_on_signal_flip": True
 #         }
+#     }
+    
+#     # Return both the parsed dictionary and the raw text for auditing
+#     return {
+#         "parsed": parsed_config, 
+#         "raw": json.dumps(parsed_config, indent=2)
 #     }

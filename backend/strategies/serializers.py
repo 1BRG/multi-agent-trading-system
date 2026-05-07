@@ -2,12 +2,8 @@ from rest_framework import serializers
 from strategies.models import Strategy
 
 class StrategyConfigSerializer(serializers.Serializer):
-    """
-    This defines the EXACT deterministic contract between Person 4 (you) 
-    and Person 5 (Backtester). The LLM's output must match this.
-    """
     rebalance_frequency = serializers.ChoiceField(
-        choices=["daily", "weekly", "monthly", "quarterly"],
+        choices=["daily", "weekly", "monthly ", "quarterly"],
         help_text="How often the portfolio is rebalanced."
     )
     ranking_metric = serializers.ChoiceField(
@@ -50,13 +46,10 @@ class StrategySerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-    read_only_fields = ("id", "owner", "created_at", "updated_at", "status", "raw_llm_response")
+       
+        read_only_fields = ("id", "owner", "created_at", "updated_at")
 
     def validate_config(self, value):
-        """
-        Enforce that the config JSON strictly matches the Backtester's requirements.
-        We only validate if the source is AI or if config data is provided.
-        """
         if not value:
             return value
             

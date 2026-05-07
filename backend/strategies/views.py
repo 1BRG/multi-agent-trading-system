@@ -72,3 +72,16 @@ class StrategyViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["patch"])
+    def approve(self, request, pk=None):
+        """PATCH /strategies/{id}/approve - mark a strategy as approved (owner only)"""
+        strategy = self.get_object()
+        # permission check: IsOwnerOrReadOnlyPublic is applied at class level
+        if strategy.owner != request.user:
+            return Response({"detail": "Only the owner can approve this strategy."}, status=status.HTTP_403_FORBIDDEN)
+
+        strategy.status = Strategy.Status.APPROVED
+        strategy.save()
+        serializer = self.get_serializer(strategy)
+        return Response(serializer.data, status=status.HTTP_200_OK)

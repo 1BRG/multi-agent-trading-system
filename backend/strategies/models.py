@@ -16,7 +16,7 @@ class Strategy(models.Model):
   name = models.CharField(max_length=255)
   description = models.TextField(blank=True)
   config = models.JSONField(default=dict, blank=True)
-  status = models.CharField(max_length=20, choices=Status.choices, default=Status.APPROVED)
+  status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
   source = models.CharField(max_length=20, choices=Source.choices, default=Source.MANUAL)
   # Store the raw LLM response for audit/debugging when a strategy is created via AI
   raw_llm_response = models.TextField(blank=True)

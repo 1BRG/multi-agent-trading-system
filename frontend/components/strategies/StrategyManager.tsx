@@ -74,12 +74,12 @@ export default function StrategyManager({ chatId, onChatCreated }: StrategyManag
       // 2. Ask AI
       const newStrategy = await generateAiStrategy(currentPrompt);
 
-      // 3. Save AI message
+      // 3. Save AI message — include the strategy id and status so the UI can act on drafts
       const aiMsg = await createChatMessage(
-        currentThreadId, 
-        "assistant", 
-        newStrategy.description, 
-        { strategyConfig: newStrategy.config, strategyName: newStrategy.name }
+        currentThreadId,
+        "assistant",
+        newStrategy.description,
+        { strategyConfig: newStrategy.config, strategyName: newStrategy.name, strategyId: newStrategy.id, strategyStatus: newStrategy.status }
       );
       
       setMessages(prev => {
@@ -120,6 +120,28 @@ export default function StrategyManager({ chatId, onChatCreated }: StrategyManag
                  <pre style={{ background: "#172033", color: "#ffffff", padding: "12px", borderRadius: "6px", overflowX: "auto", fontSize: "13px", margin: 0 }}>
                    {JSON.stringify(msg.metadata.strategyConfig, null, 2)}
                  </pre>
+                {msg.metadata?.strategyId && msg.metadata?.strategyStatus === "draft" && (
+                  <div style={{ marginTop: 8 }}>
+                    <button
+                      onClick={async () => {
+                        try {
+                          setIsLoading(true);
+                          const { approveStrategy } = await import("../../lib/strategy");
+                          const updated = await approveStrategy(msg.metadata.strategyId);
+                          // update message metadata in-place
+                          setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, metadata: { ...m.metadata, strategyStatus: updated.status } } : m));
+                        } catch (e: any) {
+                          setError(e.message || "Failed to approve strategy.");
+                        } finally {
+                          setIsLoading(false);
+                        }
+                      }}
+                      className="btn-approve"
+                    >
+                      Approve Strategy
+                    </button>
+                  </div>
+                )}
                </>
              )}
            </article>

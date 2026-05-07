@@ -17,6 +17,7 @@ export interface Strategy {
   name: string;
   description: string;
   config: StrategyConfig;
+  status: "draft" | "approved" | "archived";
   source: "manual" | "ai";
   is_public: boolean;
   created_at: string;
@@ -28,6 +29,12 @@ export async function generateAiStrategy(prompt: string): Promise<Strategy> {
   return apiRequest<Strategy>("/strategies/generate_ai", {
     method: "POST",
     body: { prompt },
+  });
+}
+
+export async function approveStrategy(strategyId: number): Promise<Strategy> {
+  return apiRequest<Strategy>(`/strategies/${strategyId}/approve`, {
+    method: "PATCH",
   });
 }
 
