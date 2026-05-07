@@ -40,7 +40,10 @@ class StrategyViewSet(viewsets.ModelViewSet):
 
         try:
             # 1. Ask the AI to build the ruleset
-            ai_output = generate_strategy_rules(prompt)
+            ai_result = generate_strategy_rules(prompt)
+            # ai_result contains {'parsed': {...}, 'raw': 'original text'}
+            ai_output = ai_result.get("parsed", {}) if isinstance(ai_result, dict) else {}
+            raw_llm = ai_result.get("raw", "") if isinstance(ai_result, dict) else ""
         except ValueError as e:
             # Catch our custom parsing/LLM errors from ai_service.py
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -53,12 +56,15 @@ class StrategyViewSet(viewsets.ModelViewSet):
         # 2. Feed the AI's output through the strict serializer we built in Step 1
         # This guarantees that if the LLM hallucinates bad config variables,
         # the serializer will catch it and return a 400 Validation Error.
+        # When an AI creates a strategy, save it as DRAFT and persist raw LLM output for audit.
         serializer = self.get_serializer(data={
             "name": ai_output.get("name", f"AI Strategy: {prompt[:20]}..."),
             "description": ai_output.get("description", ""),
             "config": ai_output.get("config", {}),
             "source": Strategy.Source.AI,
             "is_public": False,
+            "status": Strategy.Status.DRAFT,
+            "raw_llm_response": raw_llm,
         })
         
         # 3. Validate and save

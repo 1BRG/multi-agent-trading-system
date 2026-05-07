@@ -43,12 +43,14 @@ class StrategySerializer(serializers.ModelSerializer):
             "name",
             "description",
             "config",
+            "status",
+            "raw_llm_response",
             "source",
             "is_public",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "owner", "created_at", "updated_at")
+    read_only_fields = ("id", "owner", "created_at", "updated_at", "status", "raw_llm_response")
 
     def validate_config(self, value):
         """

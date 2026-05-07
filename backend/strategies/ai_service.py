@@ -54,7 +54,8 @@ def generate_strategy_rules(user_prompt: str) -> dict:
 
             # Parse the JSON
             strategy_dict = json.loads(cleaned_text)
-            return strategy_dict
+            # Return both parsed strategy and raw text for auditing
+            return {"parsed": strategy_dict, "raw": llm_response_text}
 
     except httpx.RequestError as e:
         raise ValueError(f"Failed to communicate with LLM API: {str(e)}")
