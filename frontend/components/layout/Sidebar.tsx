@@ -122,7 +122,9 @@ export function Sidebar({
 
       <section className="sidebar-history" aria-label="Chat history">
         <p className="sidebar-section-title">History</p>
-        <div className="history-list">
+        
+        {/* We force Flexbox scrolling here! */}
+        <div className="history-list" style={{ display: "flex", flexDirection: "column", overflowY: "auto" }}>
           {historyItems.length > 0 ? (
             historyItems.map((item) => (
               <button
@@ -131,6 +133,7 @@ export function Sidebar({
                 onContextMenu={(event) => handleChatContextMenu(event, item.id)}
                 onClick={() => onSelectChat(item.id)}
                 type="button"
+                style={{ flexShrink: 0 }} // This prevents the button from squishing!
               >
                 <span>{item.title}</span>
                 <small>{item.subtitle}</small>

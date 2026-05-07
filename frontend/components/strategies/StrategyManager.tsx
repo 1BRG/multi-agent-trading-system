@@ -1,25 +1,42 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Strategy, getStrategies, generateAiStrategy } from "../../lib/strategy";
+import React, { useState, useEffect, useRef } from "react";
+import { generateAiStrategy } from "../../lib/strategy"; 
+import { getChatMessages, createChatMessage, createChatThread } from "../../lib/chat";
+import type { ChatMessage } from "../../types/chat";
 
-export default function StrategyManager() {
-  const [strategies, setStrategies] = useState<Strategy[]>([]);
+interface StrategyManagerProps {
+  chatId?: string;
+  onChatCreated?: (id: string) => void;
+}
+
+export default function StrategyManager({ chatId, onChatCreated }: StrategyManagerProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load existing strategies on mount
-  useEffect(() => {
-    fetchStrategies();
-  }, []);
+  const threadRef = useRef<HTMLDivElement>(null);
 
-  const fetchStrategies = async () => {
+  useEffect(() => {
+    if (chatId) {
+      fetchMessages(Number(chatId));
+    } else {
+      setMessages([]);
+    }
+  }, [chatId]);
+
+  useEffect(() => {
+    if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
+  }, [messages, isLoading]);
+
+  const fetchMessages = async (currentChatId: number) => {
     try {
-      const data = await getStrategies();
-      setStrategies(data);
-    } catch (err: any) {
-      console.error("Failed to fetch strategies", err);
+      const allMessages = await getChatMessages();
+      const tabMessages = allMessages.filter(m => m.thread === currentChatId);
+      setMessages(tabMessages); 
+    } catch (err) {
+      console.error("Failed to fetch messages", err);
     }
   };
 
@@ -27,81 +44,105 @@ export default function StrategyManager() {
     e.preventDefault();
     if (!prompt.trim()) return;
 
+    const currentPrompt = prompt;
+    setPrompt(""); 
     setIsLoading(true);
     setError(null);
 
     try {
-      const newStrategy = await generateAiStrategy(prompt);
-      // Add the new strategy to the top of the list
-      setStrategies((prev) => [newStrategy, ...prev]);
-      setPrompt(""); // Clear the input
+      let currentThreadId = chatId ? Number(chatId) : null;
+
+      if (!currentThreadId) {
+        const generatedTitle = currentPrompt.length > 28 
+          ? currentPrompt.substring(0, 28) + "..." 
+          : currentPrompt;
+        
+        const newThread = await createChatThread(generatedTitle);
+        currentThreadId = newThread.id;
+        
+        if (onChatCreated) onChatCreated(String(newThread.id));
+      }
+
+      // 1. Save user message
+      const userMsg = await createChatMessage(currentThreadId, "user", currentPrompt);
+      
+      setMessages(prev => {
+        if (prev.some(m => m.id === userMsg.id)) return prev;
+        return [...prev, userMsg];
+      });
+
+      // 2. Ask AI
+      const newStrategy = await generateAiStrategy(currentPrompt);
+
+      // 3. Save AI message
+      const aiMsg = await createChatMessage(
+        currentThreadId, 
+        "assistant", 
+        newStrategy.description, 
+        { strategyConfig: newStrategy.config, strategyName: newStrategy.name }
+      );
+      
+      setMessages(prev => {
+        if (prev.some(m => m.id === aiMsg.id)) return prev;
+        return [...prev, aiMsg];
+      });
+
     } catch (err: any) {
-      setError(err.message || "Failed to generate strategy. Please try again.");
+      setError(err.message || "Failed to generate strategy.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-8">
-      {/* --- AI Prompt Section --- */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="text-xl font-semibold mb-4">AI Strategy Builder</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Describe the trading strategy you want to build. The AI will translate your idea into strict, backtestable rules.
-        </p>
+    <>
+      <div className="chat-thread" ref={threadRef}>
+        {messages.length === 0 && !isLoading && (
+          <article className="chat-message assistant">
+            <strong>Strategy agent</strong>
+            <p>Hello! Describe the trading strategy you want to build.</p>
+          </article>
+        )}
 
-        <form onSubmit={handleGenerate} className="space-y-4">
-          <textarea
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            rows={3}
-            placeholder="e.g., Build a weekly momentum strategy that holds the top 5 highest conviction tech stocks, equal weighted."
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            disabled={isLoading}
-          />
-          
-          {error && <div className="text-red-600 text-sm">{error}</div>}
+        {messages.map((msg) => (
+           <article key={msg.id} className={`chat-message ${msg.role}`}>
+             <strong>{msg.role === "user" ? "You" : "Strategy agent"}</strong>
+             
+             {msg.role === "assistant" && msg.metadata?.strategyName && (
+               <h3 style={{ marginTop: "4px", marginBottom: "4px" }}>{msg.metadata.strategyName}</h3>
+             )}
+             
+             <p style={{ marginTop: "4px", marginBottom: "12px" }}>{msg.content}</p>
+             
+             {msg.metadata?.strategyConfig && (
+               <>
+                 <p className="eyebrow" style={{ marginBottom: "4px" }}>Deterministic Config:</p>
+                 <pre style={{ background: "#172033", color: "#ffffff", padding: "12px", borderRadius: "6px", overflowX: "auto", fontSize: "13px", margin: 0 }}>
+                   {JSON.stringify(msg.metadata.strategyConfig, null, 2)}
+                 </pre>
+               </>
+             )}
+           </article>
+        ))}
 
-          <button
-            type="submit"
-            disabled={isLoading || !prompt.trim()}
-            className="w-full bg-blue-600 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            {isLoading ? "Generating Ruleset..." : "Generate Deterministic Ruleset"}
-          </button>
-        </form>
-      </div>
+        {isLoading && (
+          <article className="chat-message assistant">
+            <strong>Strategy agent</strong>
+            <p>Analyzing idea and generating deterministic ruleset...</p>
+          </article>
+        )}
 
-      {/* --- Generated Strategies List --- */}
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Your Saved Strategies</h3>
-        {strategies.length === 0 ? (
-          <p className="text-gray-500 text-sm">No strategies generated yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {strategies.map((strategy) => (
-              <div key={strategy.id} className="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-bold text-lg text-gray-900">{strategy.name}</h4>
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full uppercase tracking-wider font-semibold">
-                    {strategy.source}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700 mb-4">{strategy.description}</p>
-                
-                {/* The "Frozen Rule" visualization: Showing the hardcoded JSON to the user */}
-                <div className="bg-gray-900 rounded-md p-4 overflow-x-auto">
-                  <p className="text-xs text-gray-400 mb-2 uppercase tracking-wide">Deterministic Backtest Config:</p>
-                  <pre className="text-green-400 text-sm font-mono">
-                    {JSON.stringify(strategy.config, null, 2)}
-                  </pre>
-                </div>
-              </div>
-            ))}
-          </div>
+        {error && (
+          <article className="chat-message user" style={{ background: "#fff1f3", color: "#a11124" }}>
+            <strong>System Error</strong><p>{error}</p>
+          </article>
         )}
       </div>
-    </div>
+
+      <form className="chat-composer" onSubmit={handleGenerate}>
+        <input placeholder="Type your trading idea here..." type="text" value={prompt} onChange={(e) => setPrompt(e.target.value)} disabled={isLoading} />
+        <button disabled={isLoading || !prompt.trim()} type="submit">Send</button>
+      </form>
+    </>
   );
 }
