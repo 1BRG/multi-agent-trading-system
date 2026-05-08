@@ -21,6 +21,7 @@ from conversations.views import (
     ChatThreadViewSet,
     DebateMessageViewSet,
     DebateSessionViewSet,
+    StockSignalViewSet,
 )
 from market.views import AssetListAPIView, AssetPricesAPIView, AssetPriceViewSet, AssetViewSet
 from portfolios.views import PortfolioHoldingViewSet, PortfolioViewSet
@@ -38,6 +39,7 @@ router.register("chat-messages", ChatMessageViewSet, basename="chat-message")
 router.register("debates", DebateSessionViewSet, basename="debate")
 router.register("debate-messages", DebateMessageViewSet, basename="debate-message")
 router.register("users", UserAdminViewSet, basename="user-admin")
+router.register("stock-signals", StockSignalViewSet, basename="stock-signal")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
