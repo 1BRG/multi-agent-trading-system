@@ -64,3 +64,45 @@ class DebateMessage(models.Model):
 
   class Meta:
     ordering = ["round_number", "created_at"]
+
+
+class StockSignal(models.Model):
+  """Structured verdict output from a Bull/Bear/Judge debate on a single stock."""
+
+  class Action(models.TextChoices):
+    BUY = "BUY", "Buy"
+    SELL = "SELL", "Sell"
+    HOLD = "HOLD", "Hold"
+
+  user = models.ForeignKey(
+    settings.AUTH_USER_MODEL,
+    on_delete=models.CASCADE,
+    related_name="stock_signals",
+  )
+  asset = models.ForeignKey(
+    "market.Asset",
+    on_delete=models.CASCADE,
+    related_name="stock_signals",
+  )
+  debate_session = models.OneToOneField(
+    DebateSession,
+    on_delete=models.CASCADE,
+    related_name="signal",
+    null=True,
+    blank=True,
+  )
+  action = models.CharField(max_length=10, choices=Action.choices)
+  conviction = models.DecimalField(max_digits=5, decimal_places=4)
+  bull_thesis = models.TextField(blank=True)
+  bear_thesis = models.TextField(blank=True)
+  judge_reasoning = models.TextField(blank=True)
+  created_at = models.DateTimeField(auto_now_add=True)
+
+  class Meta:
+    ordering = ["-created_at"]
+    indexes = [
+      models.Index(fields=["asset", "-created_at"], name="signal_asset_date_idx"),
+    ]
+
+  def __str__(self) -> str:
+    return f"{self.asset.symbol} {self.action} ({self.conviction})"
