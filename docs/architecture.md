@@ -18,7 +18,7 @@ The current implementation uses Django models and Django migrations for schema m
 | `frontend` | Next.js / React | User interface, auth screens, sidebar workspace, Stocks UI. |
 | `backend` | Django REST Framework | Auth, CRUD APIs, market data APIs, domain APIs. |
 | `postgres` | PostgreSQL 15 | Stores users, assets, prices, portfolios, strategies, backtests and conversations. |
-| `ollama` | Ollama | Reserved for local AI workflows. Real AI orchestration is still pending. |
+| `ollama` | Ollama | Actively powers the local LLM workflows (Llama3) for the Debate System and Strategy Generation. |
 
 ## Backend
 
@@ -58,8 +58,10 @@ Implemented workspace areas:
 - Logged-in dashboard with persistent left sidebar.
 - Stocks page with asset list and selected-asset price details.
 - Portfolio page for creating user portfolios and managing holdings.
-- Placeholder pages for Backtesting, Strategy chat, Debate mode and Settings.
-- Profile page embedded through the sidebar user menu.
+- Interactive interface for Strategy formulation and historical chat memory.
+- Fully implemented Debate Mode UI showing agent transcripts and conviction ring charts.
+- Placeholder page for Backtesting and Settings.
+Profile page embedded through the sidebar user menu.
 
 The sidebar state is persisted after refresh. The Stocks page keeps the selected asset, but the default date range is the last month to avoid loading all historical prices by default.
 
@@ -76,7 +78,5 @@ See `docs/api_routes.md` for route details.
 ## Pending Architecture Work
 
 - Real backtesting engine.
-- Real AI orchestration for Strategy and Debate modes.
-- Persistent frontend chat history connected to database records.
 - Scheduled market data update runner, for example cron or Celery Beat.
 - Production Docker images and production static/media handling.

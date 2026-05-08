@@ -1,4 +1,3 @@
-
 # AI Stock Lab
 
 AI Stock Lab is an AI-assisted stock analysis and backtesting platform.
@@ -24,9 +23,7 @@ DJANGO_SECRET_KEY=your-local-django-secret
 JWT_SECRET_KEY=your-local-jwt-secret
 ```
 
-For local development, the PostgreSQL values from `.env.example` can remain unchanged.
-
-Google and GitHub OAuth variables are optional. They only need to be configured if you want third-party login to work.
+For local development, the PostgreSQL values from `.env.example` can remain unchanged. Google and GitHub OAuth variables are optional.
 
 ### 3. Start the application with Docker
 
@@ -61,7 +58,7 @@ On a new machine or with an empty database, run:
 docker compose exec backend python manage.py import_historical_market_data
 ```
 
-This imports daily OHLCV market data from `2010-01-01` until today for all supported symbols. The process may take some time.
+This imports daily OHLCV market data from `2010-01-01` until today for all supported symbols.
 
 To update only missing prices after the latest stored date:
 
@@ -73,57 +70,28 @@ docker compose exec backend python manage.py update_market_data
 
 ## Implemented Features
 
-### AI Strategy Generation (The Strategy Manager)
-The platform features a fully integrated **AI Strategy Manager** that translates qualitative natural-language trading ideas into strict, deterministic, mathematical JSON rulesets ready for backtesting.
+### 1. AI Stock Rater & Debate System
+A fully integrated multi-agent LLM debate system to evaluate individual stocks.
+- **The Debate Flow:** A "Bull" LLM and "Bear" LLM engage in a multi-round debate over a specific ticker (Opening → Rebuttal).
+- **The Verdict:** An impartial "Judge" LLM reviews the debate transcript and outputs a rigid JSON verdict (`BUY/SELL/HOLD`) alongside a mathematical **Conviction Score** (0.0 to 1.0).
+- **Data Persistence:** The qualitative debate and the quantitative conviction score are saved to the database to be consumed by the Strategy Manager.
 
-- **How it works:** 
-  1. Navigate to **Strategy** on the sidebar and click **+ New Chat**.
-  2. Type a trading idea (e.g., *"Aggressive portfolio holding only the top 3 tech stocks, weighted by conviction, and rebalanced daily"*).
-  3. The local LLM processes the prompt and outputs a strict JSON configuration.
-  4. The Django backend parses the output through a strict validation "Firewall" to ensure no hallucinations break the backtesting engine.
-- **The "Frozen Rule" & Approval Workflow:** To prevent Lookahead Bias during backtesting, the AI is only invoked during this brainstorming phase. The generated ruleset is saved permanently to the database as a `DRAFT`. The user must manually review the JSON rules and click **"Approve Strategy"** before the backtester is allowed to execute it.
-- **Persistent Chat History:** Conversations with the Strategy Agent are saved in PostgreSQL, isolated by chat tabs, and auto-named based on your first prompt.
-- **Audit Logging:** The raw text output from the LLM is securely logged in the database (`raw_llm_response`) for prompt debugging and safety auditing.
+### 2. AI Strategy Generation (Portfolio Construction)
+An interactive AI Strategy Manager that translates qualitative natural-language trading ideas into strict, deterministic, mathematical JSON rulesets ready for backtesting.
+- **Context-Aware Memory:** The Strategy LLM retains chat history. Users can iteratively refine their strategies (e.g., *"Change the portfolio size to 8 and make it equal weighted"*) without the AI losing previous context.
+- **The Factor Bridge:** The AI configures a `min_conviction_score` parameter, acting as a direct bridge to the Debate System's outputs.
+- **Strict Validation Firewall:** The Django backend strictly validates the LLM's output against a rigid schema. Any AI hallucinations (e.g., inventing a "yearly" rebalance frequency) are blocked and rejected before they can break the backtesting engine.
+- **The "Frozen Rule" & Approval Workflow:** To prevent Lookahead Bias, the generated ruleset is saved as a `DRAFT`. The user must manually review the JSON rules and click **"Approve Strategy"** before the backtester is allowed to execute it.
 
-### Backend and Database
+### 3. Backend and Database Architecture
+- Django REST Framework backend with PostgreSQL database running through Docker.
+- Custom user model, JWT authentication, and user portfolios.
+- Backend reads stored market data directly from PostgreSQL to prevent live-API calls during backtesting (ensuring temporal accuracy and preventing lookahead bias).
 
-- Django REST Framework backend.
-- PostgreSQL database running through Docker.
-- Django migrations for database schema management.
-- Custom user model based on `AbstractUser`.
-- JWT authentication using `djangorestframework-simplejwt`.
-- Database tables for:
-  - users/accounts
-  - assets & asset prices
-  - user portfolios & portfolio holdings
-  - strategies & backtest runs
-  - chat threads/messages
-  - debate sessions/messages
-
-### Authentication and Accounts
-
-- User registration.
-- Login with email or username.
-- JWT-based authenticated requests.
-- Current user endpoint, profile page, and password updates.
-
-### Layout and Frontend
-
-- Persistent ChatGPT-like left sidebar after login.
-- Real chat history persisted in the database for Strategy generation.
-- Right-click delete support for conversations.
-- Separate pages for Stocks, Portfolio, Backtesting, and Settings.
-
-### Market Data and Stocks
-
-- Supported assets: `AAPL`, `MSFT`, `GOOGL`, `AMZN`, `NVDA`, `TSLA`, `META`, `JPM`, `KO`, `WMT`, `SPY`, `QQQ`, `GLD`, `GC=F`.
-- Backend reads stored market data directly from PostgreSQL to prevent live-API calls during backtesting.
-- Stocks UI lists all supported assets with date range selectors.
-
-### Portfolios
-
-- Authenticated users can create, update, list and delete their own private portfolios.
-- Portfolio holdings are linked to supported assets from the `assets` table.
+### 4. Layout and Frontend
+- Persistent sidebar with real chat history persisted in PostgreSQL.
+- Dedicated workspaces for Stocks, Portfolios, Debates, and Strategy Formulation.
+- Stocks UI listing all supported assets (`AAPL`, `MSFT`, `SPY`, `GLD`, etc.) with date range selectors.
 
 ---
 
@@ -137,61 +105,46 @@ POST   /auth/login
 GET    /api/assets
 GET    /api/assets/{symbol}/prices?start=YYYY-MM-DD&end=YYYY-MM-DD
 GET    /portfolios
-POST   /portfolios
-POST   /strategies/generate_ai       (Generates AI JSON ruleset)
+POST   /debates/run_debate           (Executes the 5-round Bull/Bear/Judge workflow)
+POST   /strategies/generate_ai       (Generates AI JSON ruleset with chat history)
 PATCH  /strategies/{id}/approve      (Approves a Draft strategy for backtesting)
 ```
 
-More route details are available in:
-```text
-docs/api_routes.md
-```
+---
+
+## Planned Features (Future Work)
+
+### 1. The Vectorbt Backtesting Engine
+- Real backtesting engine powered by the `vectorbt` library.
+- Execution endpoint consuming the approved `Strategy.config` JSON and `StockSignal` conviction scores.
+- Results dashboard displaying Annualized Return, Sharpe ratio, Maximum Drawdown, and Equity Curve.
+- Strict enforcement of local PostgreSQL price data usage (rebalancing on day $T$ only using data from day $T-1$).
+
+### 2. Institutional Trading Metrics
+To scale the backtester to production hedge-fund standards, future iterations will include:
+- **Transaction Costs & Slippage:** Simulating real-world broker fees on high-frequency rebalances.
+- **Advanced Exit Logic:** Hardcoded Stop-Loss and Take-Profit limits independent of signal flips.
+- **Long/Short Capabilities:** Allowing the strategy JSON to dictate short-selling the lowest conviction stocks.
 
 ---
 
-## Planned Features
-
-### Backtesting Engine
-- Real backtesting engine powered by `vectorbt`.
-- Backtest execution endpoint consuming the approved `Strategy.config` JSON.
-- Results dashboard displaying total return, Sharpe ratio, maximum drawdown, win rate, equity curve, and trade list.
-- Strict enforcement of local PostgreSQL price data usage (no external API calls during a run).
-
-### Debate Mode
-- Debate mode with two AI agents (Bull vs. Bear) discussing a selected stock.
-- A "Judge" LLM that outputs Conviction scores to be consumed by the Strategy Manager.
-
-### Market Data and Charting
-- Candlestick chart component.
-- Scheduled market data update runner (e.g., cron or Celery Beat).
-
-### Production Readiness
-- Production Docker image builds and proper secrets management.
-- Static files handling for Django admin and media files.
-
----
-
-## Testing
+## Testing & Checks
 
 Run backend tests:
-
 ```bash
 docker compose exec backend python manage.py test
 ```
 
 Run Django system checks:
-
 ```bash
 docker compose exec backend python manage.py check
 ```
 
 Run frontend type checking:
-
 ```bash
 docker compose exec frontend npx tsc --noEmit
 ```
 
----
 
 ## Documentation
 

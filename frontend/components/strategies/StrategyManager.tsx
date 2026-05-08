@@ -72,7 +72,7 @@ export default function StrategyManager({ chatId, onChatCreated }: StrategyManag
       });
 
       // 2. Ask AI
-      const newStrategy = await generateAiStrategy(currentPrompt);
+      const newStrategy = await generateAiStrategy(currentPrompt, currentThreadId);
 
       // 3. Save AI message — include the strategy id and status so the UI can act on drafts
       const aiMsg = await createChatMessage(
