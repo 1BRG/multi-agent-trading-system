@@ -8,6 +8,7 @@ export interface StrategyConfig {
   sizing: "equal_weight" | "conviction_weighted";
   sector_cap_pct: number;
   exit_on_signal_flip: boolean;
+  min_conviction_score: number;
 }
 
 // 2. Define the main Strategy object returned by the backend
@@ -22,13 +23,14 @@ export interface Strategy {
   is_public: boolean;
   created_at: string;
   updated_at: string;
+  
 }
 
 // 3. API Binding: Function to call our new Django endpoint
-export async function generateAiStrategy(prompt: string): Promise<Strategy> {
+export async function generateAiStrategy(prompt: string, threadId?: number): Promise<Strategy> {
   return apiRequest<Strategy>("/strategies/generate_ai", {
     method: "POST",
-    body: { prompt },
+    body: { prompt, thread_id: threadId }, 
   });
 }
 

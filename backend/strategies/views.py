@@ -3,6 +3,7 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from conversations.models import ChatMessage
 from strategies.models import Strategy
 from strategies.serializers import StrategySerializer
 from strategies.ai_service import generate_strategy_rules
@@ -26,24 +27,30 @@ class StrategyViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
     @action(detail=False, methods=["post"])
+    @action(detail=False, methods=["post"])
     def generate_ai(self, request):
-        """
-        Endpoint: POST /strategies/generate_ai
-        Payload: { "prompt": "user's trading idea here" }
-        """
         prompt = request.data.get("prompt")
-        if not prompt or not prompt.strip():
-            return Response(
-                {"detail": "Please provide a prompt to generate a strategy."}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        thread_id = request.data.get("thread_id") # Get the thread_id from frontend
 
+        if not prompt or not prompt.strip():
+            return Response({"detail": "Provide a prompt."}, status=400)
+
+        # 1. Reconstruct chat history
+        messages_history = []
+        if thread_id:
+            # Fetch past messages from the DB to give the AI context
+            past_messages = ChatMessage.objects.filter(thread_id=thread_id).order_by("created_at")
+            for msg in past_messages:
+                messages_history.append({"role": msg.role, "content": msg.content})
+        
+        # Add the current user prompt
+        messages_history.append({"role": "user", "content": prompt})
+
+        # 2. Ask the AI 
         try:
-            # 1. Ask the AI to build the ruleset
-            ai_result = generate_strategy_rules(prompt)
-            # ai_result contains {'parsed': {...}, 'raw': 'original text'}
-            ai_output = ai_result.get("parsed", {}) if isinstance(ai_result, dict) else {}
-            raw_llm = ai_result.get("raw", "") if isinstance(ai_result, dict) else ""
+            ai_result = generate_strategy_rules(messages_history)
+            ai_output = ai_result.get("parsed", {})
+            raw_llm = ai_result.get("raw", "")
         except ValueError as e:
             # Catch our custom parsing/LLM errors from ai_service.py
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -77,11 +84,20 @@ class StrategyViewSet(viewsets.ModelViewSet):
     def approve(self, request, pk=None):
         """PATCH /strategies/{id}/approve - mark a strategy as approved (owner only)"""
         strategy = self.get_object()
-        # permission check: IsOwnerOrReadOnlyPublic is applied at class level
+        
         if strategy.owner != request.user:
             return Response({"detail": "Only the owner can approve this strategy."}, status=status.HTTP_403_FORBIDDEN)
 
+        # 1. Approve the strategy
         strategy.status = Strategy.Status.APPROVED
         strategy.save()
+
+       
+        chat_messages = ChatMessage.objects.filter(thread__user=request.user)
+        for msg in chat_messages:
+            if msg.metadata and msg.metadata.get("strategyId") == strategy.id:
+                msg.metadata["strategyStatus"] = "approved"
+                msg.save()
+
         serializer = self.get_serializer(strategy)
         return Response(serializer.data, status=status.HTTP_200_OK)
