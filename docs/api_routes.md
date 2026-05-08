@@ -171,6 +171,16 @@ These endpoints are registered through DRF's router without trailing slash.
 | `/debate-messages` | Bearer token | Messages scoped to current user's debates. |
 | `/users` | Admin bearer token | Admin user management. |
 
+## AI & Strategy Workflows
+
+These are custom actions built on top of the DRF viewsets to handle LLM orchestration.
+
+| Method | Route | Auth | Description |
+| --- | --- | --- | --- |
+| `POST` | `/debates/run_debate` | Bearer token | Executes the 5-round Bull/Bear/Judge AI debate. Expects `{ "ticker": "AAPL" }`. Returns the debate transcript and final `StockSignal`. |
+| `POST` | `/strategies/generate_ai` | Bearer token | Passes a natural language prompt and chat `thread_id` to the LLM to generate a strict JSON strategy config. |
+| `PATCH` | `/strategies/{id}/approve` | Bearer token | Marks a DRAFT strategy as `APPROVED`, unlocking it for the backtesting engine. Also updates chat metadata. |
+
 ## Utility Routes
 
 | Method | Route | Auth | Description |

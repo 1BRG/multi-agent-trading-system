@@ -237,3 +237,23 @@ Indexes:
 | `round_number` | integer | default `1` | Debate round number. |
 | `content` | text | not null | Agent message content. |
 | `created_at` | timestamp with timezone | not null | Creation timestamp. |
+
+### `conversations_stocksignal`
+
+Stores the final quantitative and qualitative verdict from the Judge AI after a Debate session. This table bridges the Stock Rater (Module A) and the Strategy Manager (Module B).
+
+| Column | Type | Constraints | Description |
+| --- | --- | --- | --- |
+| `id` | integer | primary key | Internal signal id. |
+| `user_id` | integer | FK to `accounts_user` | User who generated the signal. |
+| `asset_id` | integer | FK to `assets` | The stock being rated. |
+| `debate_session_id` | integer | nullable FK to `conversations_debatesession` | Link to the transcript. |
+| `action` | varchar(10) | `BUY` / `SELL` / `HOLD` | The Judge's final action. |
+| `conviction` | decimal(5, 4) | between `0.0` and `1.0` | Mathematical conviction score. |
+| `bull_thesis` | text | blank allowed | The Bull Agent's opening argument. |
+| `bear_thesis` | text | blank allowed | The Bear Agent's opening argument. |
+| `judge_reasoning` | text | blank allowed | The Judge Agent's explanation. |
+| `created_at` | timestamp with timezone | not null | Creation timestamp. |
+
+Indexes:
+- `signal_asset_date_idx` on `(asset_id, created_at DESC)`.
