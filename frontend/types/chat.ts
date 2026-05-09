@@ -1,10 +1,20 @@
+export interface ChatMessageMetadata {
+  strategyConfig?: unknown;
+  strategyName?: string;
+  strategyId?: number;
+  strategyStatus?: "draft" | "approved" | "archived";
+}
+
 export interface ChatMessage {
-  id: string;
+  id: number;
+  thread: number;
   role: "user" | "assistant";
   content: string;
+  metadata?: ChatMessageMetadata;
 }
 
 export interface ChatThread {
-  id: string;
+  id: number;
   title: string;
+  created_at: string;
 }

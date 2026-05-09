@@ -284,6 +284,7 @@ export function StocksPage() {
   }, [assets, query]);
 
   const selectedAsset = assets.find((asset) => asset.symbol === selectedSymbol) ?? null;
+  const activeDateRange = `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}`;
   const visiblePrices = selectedPrices.slice().reverse();
 
   function handleSelectAsset(symbol: string) {
@@ -298,63 +299,92 @@ export function StocksPage() {
 
   return (
     <section className="workspace-panel stocks-panel">
-      <div>
-        <p className="eyebrow">Stocks</p>
-        <h1>Market data</h1>
-        <p className="muted">
-          Stocks, ETFs, and gold-related instruments stored in PostgreSQL. Select an asset to see
-          price details for the day or date range you choose.
-        </p>
+      <div className="workspace-hero">
+        <div>
+          <p className="eyebrow">Stocks</p>
+          <h1>Market data terminal</h1>
+          <p className="muted">
+            Explore equities, ETFs, and commodity proxies stored in PostgreSQL. Select an asset
+            to inspect its recent trend, OHLCV history, and custom date window.
+          </p>
+        </div>
+
+        <div className="workspace-stats">
+          <div className="stat-card">
+            <span>Assets loaded</span>
+            <strong>{assets.length}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Selected asset</span>
+            <strong>{selectedAsset?.symbol ?? "None"}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Date window</span>
+            <strong>{activeDateRange}</strong>
+          </div>
+        </div>
       </div>
 
-      <label className="stock-search">
-        <span>Search asset</span>
-        <input
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search AAPL, SPY, GLD, GC=F..."
-          type="search"
-          value={query}
-        />
-      </label>
+      <div className="workspace-card">
+        <label className="stock-search">
+          <span>Search asset</span>
+          <input
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search AAPL, SPY, GLD, GC=F..."
+            type="search"
+            value={query}
+          />
+        </label>
+      </div>
 
       {isLoading ? <p className="muted">Loading assets...</p> : null}
       {error ? <p className="form-error">{error}</p> : null}
 
-      <div className="stocks-table-wrap">
-        <table className="stocks-table selectable">
-          <thead>
-            <tr>
-              <th>Symbol</th>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Exchange</th>
-              <th>Last date</th>
-              <th>Close</th>
-              <th>Volume</th>
-              <th>Currency</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredAssets.map((asset) => (
-              <tr
-                className={asset.symbol === selectedSymbol ? "selected" : ""}
-                key={asset.symbol}
-                onClick={() => handleSelectAsset(asset.symbol)}
-              >
-                <td>{asset.symbol}</td>
-                <td>{asset.name}</td>
-                <td>{asset.asset_type}</td>
-                <td>{asset.exchange || "-"}</td>
-                <td>{asset.latest_price ? formatDateForDisplay(asset.latest_price.date) : "No prices yet"}</td>
-                <td>{formatPrice(asset.latest_price?.close)}</td>
-                <td>
-                  {asset.latest_price ? volumeFormatter.format(asset.latest_price.volume) : "-"}
-                </td>
-                <td>{asset.currency}</td>
+      <div className="workspace-card">
+        <div className="section-header">
+          <div>
+            <p className="eyebrow">Asset universe</p>
+            <h2>Available instruments</h2>
+          </div>
+          <p className="muted">Click a row to open its price history.</p>
+        </div>
+
+        <div className="stocks-table-wrap">
+          <table className="stocks-table selectable">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Exchange</th>
+                <th>Last date</th>
+                <th>Close</th>
+                <th>Volume</th>
+                <th>Currency</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredAssets.map((asset) => (
+                <tr
+                  className={asset.symbol === selectedSymbol ? "selected" : ""}
+                  key={asset.symbol}
+                  onClick={() => handleSelectAsset(asset.symbol)}
+                >
+                  <td>{asset.symbol}</td>
+                  <td>{asset.name}</td>
+                  <td>{asset.asset_type}</td>
+                  <td>{asset.exchange || "-"}</td>
+                  <td>{asset.latest_price ? formatDateForDisplay(asset.latest_price.date) : "No prices yet"}</td>
+                  <td>{formatPrice(asset.latest_price?.close)}</td>
+                  <td>
+                    {asset.latest_price ? volumeFormatter.format(asset.latest_price.volume) : "-"}
+                  </td>
+                  <td>{asset.currency}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {selectedAsset ? (
@@ -377,25 +407,25 @@ export function StocksPage() {
             </p>
           </div>
 
-            <div className="stock-detail-summary">
-              <div>
-                <span>Latest close</span>
-                <strong>{formatPrice(selectedAsset.latest_price?.close)}</strong>
-              </div>
-              <div>
-                <span>Latest date</span>
-                <strong>{formatDateForDisplay(selectedAsset.latest_price?.date)}</strong>
-              </div>
-              <div>
-                <span>Asset type</span>
-                <strong>{selectedAsset.asset_type}</strong>
-              </div>
+          <div className="stock-detail-summary">
+            <div>
+              <span>Latest close</span>
+              <strong>{formatPrice(selectedAsset.latest_price?.close)}</strong>
             </div>
+            <div>
+              <span>Latest date</span>
+              <strong>{formatDateForDisplay(selectedAsset.latest_price?.date)}</strong>
+            </div>
+            <div>
+              <span>Asset type</span>
+              <strong>{selectedAsset.asset_type}</strong>
+            </div>
+          </div>
 
-            <div className="stock-date-controls">
-              <DatePickerField label="Start date" onChange={setStartDate} value={startDate} />
-              <DatePickerField label="End date" onChange={setEndDate} value={endDate} />
-            </div>
+          <div className="stock-date-controls">
+            <DatePickerField label="Start date" onChange={setStartDate} value={startDate} />
+            <DatePickerField label="End date" onChange={setEndDate} value={endDate} />
+          </div>
 
           {isLoadingPrices ? <p className="muted">Loading prices...</p> : null}
           {pricesError ? <p className="form-error">{pricesError}</p> : null}

@@ -1,4 +1,4 @@
-import { apiRequest } from "./api";
+import { ApiError, apiRequest } from "./api";
 
 // 1. Define the strict config ruleset (This matches StrategyConfigSerializer)
 export interface StrategyConfig {
@@ -31,10 +31,31 @@ export interface Strategy {
 
 // 3. API Binding: Function to call our new Django endpoint
 export async function generateAiStrategy(prompt: string, threadId?: number): Promise<Strategy> {
-  return apiRequest<Strategy>("/strategies/generate_ai", {
-    method: "POST",
-    body: { prompt, thread_id: threadId }, 
-  });
+  const requestBody = { prompt, thread_id: threadId };
+
+  try {
+    return await apiRequest<Strategy>("/strategies/generate_ai", {
+      method: "POST",
+      body: requestBody,
+    });
+  } catch (error) {
+    const message = error instanceof ApiError ? error.message.toLowerCase() : "";
+    const shouldRetryForDeterministicConfig =
+      error instanceof ApiError &&
+      error.status === 400 &&
+      (message.includes("rebalance_frequency") || message.includes("not a valid choice"));
+
+    if (!shouldRetryForDeterministicConfig) {
+      throw error;
+    }
+
+    const retryPrompt = `${prompt}\n\nImportant: return only valid deterministic values. rebalance_frequency must be exactly one of: daily, weekly, monthly, quarterly.`;
+
+    return apiRequest<Strategy>("/strategies/generate_ai", {
+      method: "POST",
+      body: { prompt: retryPrompt, thread_id: threadId },
+    });
+  }
 }
 
 export async function approveStrategy(strategyId: number): Promise<Strategy> {
