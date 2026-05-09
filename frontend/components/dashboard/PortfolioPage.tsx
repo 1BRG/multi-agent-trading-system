@@ -52,6 +52,7 @@ export function PortfolioPage() {
   const totalTargetWeight = useMemo(() => (
     selectedPortfolio?.holdings.reduce((sum, holding) => sum + Number(holding.target_weight), 0) ?? 0
   ), [selectedPortfolio]);
+  const totalCash = portfolios.reduce((sum, portfolio) => sum + Number(portfolio.cash ?? 0), 0);
 
   async function loadPortfolios() {
     const response = await apiRequest<Portfolio[]>("/portfolios");
@@ -211,9 +212,30 @@ export function PortfolioPage() {
 
   return (
     <section className="workspace-panel portfolio-panel">
-      <div>
-        <p className="eyebrow">Portfolio</p>
-        <h1>Portfolios</h1>
+      <div className="workspace-hero">
+        <div>
+          <p className="eyebrow">Portfolio</p>
+          <h1>Portfolio workspace</h1>
+          <p className="muted">
+            Create watchlists of capital, assign target weights, and manage holdings against live
+            instruments from the local market database.
+          </p>
+        </div>
+
+        <div className="workspace-stats">
+          <div className="stat-card">
+            <span>Portfolios</span>
+            <strong>{portfolios.length}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Selected holdings</span>
+            <strong>{selectedPortfolio?.holdings.length ?? 0}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Total cash</span>
+            <strong>{formatMoney(String(totalCash), selectedPortfolio?.base_currency ?? "USD")}</strong>
+          </div>
+        </div>
       </div>
 
       {isLoading ? <p className="muted">Loading portfolios...</p> : null}
@@ -222,48 +244,67 @@ export function PortfolioPage() {
 
       <div className="portfolio-grid">
         <section className="portfolio-column">
-          <form className="panel-form portfolio-form" onSubmit={handleCreatePortfolio}>
-            <h2>Create portfolio</h2>
-            <label className="field">
-              <span>Name</span>
-              <input maxLength={255} name="name" required type="text" />
-            </label>
-            <div className="portfolio-form-row">
-              <label className="field">
-                <span>Cash</span>
-                <input min="0" name="cash" placeholder="10000.00" step="0.01" type="number" />
-              </label>
-              <label className="field">
-                <span>Currency</span>
-                <input defaultValue="USD" maxLength={10} name="base_currency" required type="text" />
-              </label>
+          <section className="workspace-card">
+            <div className="section-header">
+              <div>
+                <p className="eyebrow">Create</p>
+                <h2>New portfolio</h2>
+              </div>
+              <p className="muted">Start with capital and a base currency.</p>
             </div>
-            <label className="field">
-              <span>Description</span>
-              <input maxLength={500} name="description" type="text" />
-            </label>
-            <button className="primary-button" disabled={isCreatingPortfolio} type="submit">
-              {isCreatingPortfolio ? "Creating..." : "Create"}
-            </button>
-          </form>
 
-          <div className="portfolio-list" aria-label="Portfolio list">
-            {portfolios.length > 0 ? (
-              portfolios.map((portfolio) => (
-                <button
-                  className={portfolio.id === selectedPortfolioId ? "portfolio-list-item active" : "portfolio-list-item"}
-                  key={portfolio.id}
-                  onClick={() => setSelectedPortfolioId(portfolio.id)}
-                  type="button"
-                >
-                  <span>{portfolio.name}</span>
-                  <small>{`${formatMoney(portfolio.cash, portfolio.base_currency)} cash`}</small>
-                </button>
-              ))
-            ) : (
-              <p className="muted">No portfolios yet.</p>
-            )}
-          </div>
+            <form className="panel-form portfolio-form" onSubmit={handleCreatePortfolio}>
+              <label className="field">
+                <span>Name</span>
+                <input maxLength={255} name="name" required type="text" />
+              </label>
+              <div className="portfolio-form-row">
+                <label className="field">
+                  <span>Cash</span>
+                  <input min="0" name="cash" placeholder="10000.00" step="0.01" type="number" />
+                </label>
+                <label className="field">
+                  <span>Currency</span>
+                  <input defaultValue="USD" maxLength={10} name="base_currency" required type="text" />
+                </label>
+              </div>
+              <label className="field">
+                <span>Description</span>
+                <input maxLength={500} name="description" type="text" />
+              </label>
+              <button className="primary-button" disabled={isCreatingPortfolio} type="submit">
+                {isCreatingPortfolio ? "Creating..." : "Create portfolio"}
+              </button>
+            </form>
+          </section>
+
+          <section className="workspace-card portfolio-list-card" aria-label="Portfolio list">
+            <div className="section-header">
+              <div>
+                <p className="eyebrow">Select</p>
+                <h2>Saved portfolios</h2>
+              </div>
+              <p className="muted">Switch context with one click.</p>
+            </div>
+
+            <div className="portfolio-list">
+              {portfolios.length > 0 ? (
+                portfolios.map((portfolio) => (
+                  <button
+                    className={portfolio.id === selectedPortfolioId ? "portfolio-list-item active" : "portfolio-list-item"}
+                    key={portfolio.id}
+                    onClick={() => setSelectedPortfolioId(portfolio.id)}
+                    type="button"
+                  >
+                    <span>{portfolio.name}</span>
+                    <small>{`${formatMoney(portfolio.cash, portfolio.base_currency)} cash`}</small>
+                  </button>
+                ))
+              ) : (
+                <p className="muted">No portfolios yet.</p>
+              )}
+            </div>
+          </section>
         </section>
 
         <section className="portfolio-detail">
@@ -276,7 +317,7 @@ export function PortfolioPage() {
                   <p className="muted">{selectedPortfolio.description || "No description."}</p>
                 </div>
                 <button
-                  className="secondary-button compact-button"
+                  className="secondary-button compact-button portfolio-delete-button"
                   onClick={() => handleDeletePortfolio(selectedPortfolio.id)}
                   type="button"
                 >

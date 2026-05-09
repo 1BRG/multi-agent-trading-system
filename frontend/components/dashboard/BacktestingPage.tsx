@@ -68,6 +68,7 @@ export function BacktestingPage() {
 
   const runnableStrategies = strategies.filter((strategy) => strategy.status === "approved" || strategy.is_public);
   const latestRun = runs[0] ?? null;
+  const approvedStrategyCount = runnableStrategies.length;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -104,88 +105,115 @@ export function BacktestingPage() {
 
   return (
     <section className="workspace-panel backtesting-panel">
-      <div>
-        <p className="eyebrow">Backtesting</p>
-        <h1>Backtesting</h1>
-        <p className="muted">
-          Simulate an approved strategy against stored historical OHLCV data. Runs use local
-          PostgreSQL prices only.
-        </p>
+      <div className="workspace-hero">
+        <div>
+          <p className="eyebrow">Backtesting</p>
+          <h1>Strategy lab</h1>
+          <p className="muted">
+            Simulate approved strategies against historical OHLCV data stored in PostgreSQL and
+            inspect equity, trades, and risk metrics in one place.
+          </p>
+        </div>
+
+        <div className="workspace-stats">
+          <div className="stat-card">
+            <span>Approved strategies</span>
+            <strong>{approvedStrategyCount}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Saved runs</span>
+            <strong>{runs.length}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Lookback</span>
+            <strong>{formatDate(defaultStart)} - {formatDate(defaultEnd)}</strong>
+          </div>
+        </div>
       </div>
 
       {isLoading ? <p className="muted">Loading backtesting workspace...</p> : null}
       {message ? <p className="form-success">{message}</p> : null}
       {error ? <p className="form-error">{error}</p> : null}
 
-      <form className="panel-form backtest-form" onSubmit={handleSubmit}>
-        <label className="field">
-          <span>Strategy</span>
-          <select
-            disabled={isLoading || isSubmitting}
-            onChange={(event) => setSelectedStrategyId(event.target.value)}
-            value={selectedStrategyId}
-          >
-            <option value="">Choose strategy</option>
-            {runnableStrategies.map((strategy) => (
-              <option key={strategy.id} value={strategy.id}>
-                {strategy.name} {strategy.is_public ? "(public)" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="workspace-card">
+        <div className="section-header">
+          <div>
+            <p className="eyebrow">Run</p>
+            <h2>Backtest parameters</h2>
+          </div>
+          <p className="muted">Pick a strategy, market, and date window.</p>
+        </div>
 
-        <label className="field">
-          <span>Asset</span>
-          <select
-            disabled={isLoading || isSubmitting}
-            onChange={(event) => setSelectedAssetId(event.target.value)}
-            value={selectedAssetId}
-          >
-            <option value="">Choose asset</option>
-            {assets.map((asset) => (
-              <option key={asset.id} value={asset.id}>
-                {asset.symbol} - {asset.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <form className="panel-form backtest-form" onSubmit={handleSubmit}>
+          <label className="field">
+            <span>Strategy</span>
+            <select
+              disabled={isLoading || isSubmitting}
+              onChange={(event) => setSelectedStrategyId(event.target.value)}
+              value={selectedStrategyId}
+            >
+              <option value="">Choose strategy</option>
+              {runnableStrategies.map((strategy) => (
+                <option key={strategy.id} value={strategy.id}>
+                  {strategy.name} {strategy.is_public ? "(public)" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <label className="field">
-          <span>Start date</span>
-          <input
-            disabled={isSubmitting}
-            onChange={(event) => setStartDate(event.target.value)}
-            type="date"
-            value={startDate}
-          />
-        </label>
+          <label className="field">
+            <span>Asset</span>
+            <select
+              disabled={isLoading || isSubmitting}
+              onChange={(event) => setSelectedAssetId(event.target.value)}
+              value={selectedAssetId}
+            >
+              <option value="">Choose asset</option>
+              {assets.map((asset) => (
+                <option key={asset.id} value={asset.id}>
+                  {asset.symbol} - {asset.name}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <label className="field">
-          <span>End date</span>
-          <input
-            disabled={isSubmitting}
-            onChange={(event) => setEndDate(event.target.value)}
-            type="date"
-            value={endDate}
-          />
-        </label>
+          <label className="field">
+            <span>Start date</span>
+            <input
+              disabled={isSubmitting}
+              onChange={(event) => setStartDate(event.target.value)}
+              type="date"
+              value={startDate}
+            />
+          </label>
 
-        <label className="field">
-          <span>Initial cash</span>
-          <input
-            disabled={isSubmitting}
-            min="1"
-            onChange={(event) => setInitialCash(event.target.value)}
-            step="0.01"
-            type="number"
-            value={initialCash}
-          />
-        </label>
+          <label className="field">
+            <span>End date</span>
+            <input
+              disabled={isSubmitting}
+              onChange={(event) => setEndDate(event.target.value)}
+              type="date"
+              value={endDate}
+            />
+          </label>
 
-        <button className="primary-button" disabled={isSubmitting || isLoading} type="submit">
-          {isSubmitting ? "Running..." : "Run backtest"}
-        </button>
-      </form>
+          <label className="field">
+            <span>Initial cash</span>
+            <input
+              disabled={isSubmitting}
+              min="1"
+              onChange={(event) => setInitialCash(event.target.value)}
+              step="0.01"
+              type="number"
+              value={initialCash}
+            />
+          </label>
+
+          <button className="primary-button" disabled={isSubmitting || isLoading} type="submit">
+            {isSubmitting ? "Running..." : "Run backtest"}
+          </button>
+        </form>
+      </div>
 
       {runnableStrategies.length === 0 && !isLoading ? (
         <p className="form-error">Approve a strategy before running a backtest.</p>
