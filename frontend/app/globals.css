@@ -1139,6 +1139,107 @@ button {
   max-width: 1120px;
 }
 
+.backtesting-panel {
+  max-width: 1120px;
+}
+
+.backtest-form {
+  align-items: end;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(180px, 1.2fr) repeat(3, minmax(130px, 0.7fr)) auto;
+  margin-top: 0;
+}
+
+.backtest-result,
+.backtest-history {
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.backtest-result-header {
+  align-items: start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.backtest-result-header h2,
+.backtest-history h2,
+.backtest-preview-panel h3 {
+  margin: 0;
+}
+
+.status-pill {
+  border-radius: 6px;
+  font-size: 12px;
+  padding: 6px 10px;
+  text-transform: uppercase;
+}
+
+.status-pill.success {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+.status-pill.danger {
+  background: #fff1f3;
+  color: #a11124;
+}
+
+.backtest-kpis {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.backtest-kpis div {
+  background: #f7f7f8;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+}
+
+.backtest-kpis span {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.backtest-kpis strong {
+  font-size: 20px;
+}
+
+.backtest-metrics-table {
+  min-width: 0;
+}
+
+.backtest-metrics-table th,
+.backtest-metrics-table td {
+  width: 50%;
+}
+
+.backtest-preview-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.backtest-preview-panel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.backtest-small-table,
+.backtest-history-table {
+  min-width: 620px;
+}
+
 .portfolio-grid {
   align-items: start;
   display: grid;
@@ -1460,6 +1561,9 @@ button {
 
   .stock-detail-summary,
   .stock-date-controls,
+  .backtest-form,
+  .backtest-kpis,
+  .backtest-preview-grid,
   .portfolio-grid,
   .portfolio-summary,
   .portfolio-holding-form,

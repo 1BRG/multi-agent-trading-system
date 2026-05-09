@@ -2,6 +2,9 @@ import { apiRequest } from "./api";
 
 // 1. Define the strict config ruleset (This matches StrategyConfigSerializer)
 export interface StrategyConfig {
+  signal_rule?: "moving_average_crossover";
+  short_window?: number;
+  long_window?: number;
   rebalance_frequency: "daily" | "weekly" | "monthly" | "quarterly";
   ranking_metric: "conviction";
   portfolio_size: number;

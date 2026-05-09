@@ -27,7 +27,6 @@ class StrategyViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
     @action(detail=False, methods=["post"])
-    @action(detail=False, methods=["post"])
     def generate_ai(self, request):
         prompt = request.data.get("prompt")
         thread_id = request.data.get("thread_id") # Get the thread_id from frontend
