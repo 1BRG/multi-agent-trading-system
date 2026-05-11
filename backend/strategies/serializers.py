@@ -2,6 +2,23 @@ from rest_framework import serializers
 from strategies.models import Strategy
 
 class StrategyConfigSerializer(serializers.Serializer):
+    signal_rule = serializers.ChoiceField(
+        choices=["moving_average_crossover"],
+        required=False,
+        help_text="Deterministic price signal used by the backtester."
+    )
+    short_window = serializers.IntegerField(
+        min_value=2,
+        max_value=252,
+        required=False,
+        help_text="Short moving average lookback window in trading days."
+    )
+    long_window = serializers.IntegerField(
+        min_value=3,
+        max_value=504,
+        required=False,
+        help_text="Long moving average lookback window in trading days."
+    )
     rebalance_frequency = serializers.ChoiceField(
         choices=["daily", "weekly", "monthly", "quarterly"],
         help_text="How often the portfolio is rebalanced."
@@ -61,5 +78,13 @@ class StrategySerializer(serializers.ModelSerializer):
         config_serializer = StrategyConfigSerializer(data=value)
         if not config_serializer.is_valid():
             raise serializers.ValidationError(config_serializer.errors)
-            
-        return config_serializer.validated_data
+
+        config = config_serializer.validated_data
+        short_window = config.get("short_window")
+        long_window = config.get("long_window")
+        if short_window and long_window and short_window >= long_window:
+            raise serializers.ValidationError({
+                "short_window": "short_window must be less than long_window."
+            })
+
+        return config

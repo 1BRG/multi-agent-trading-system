@@ -2,16 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { API_BASE_URL } from "../../lib/api";
 import type { User } from "../../types/auth";
 
 interface UserMenuProps {
   user: User | null;
   onLogout: () => void;
-  onOpenProfile: () => void;
   onOpenSettings: () => void;
 }
 
-export function UserMenu({ user, onLogout, onOpenProfile, onOpenSettings }: UserMenuProps) {
+export function UserMenu({ user, onLogout, onOpenSettings }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const userLabel = user?.full_name || user?.username || "Account";
@@ -27,11 +27,6 @@ export function UserMenu({ user, onLogout, onOpenProfile, onOpenSettings }: User
     return () => document.removeEventListener("click", handleDocumentClick);
   }, []);
 
-  function handleProfileClick() {
-    setIsOpen(false);
-    onOpenProfile();
-  }
-
   function handleSettingsClick() {
     setIsOpen(false);
     onOpenSettings();
@@ -46,9 +41,6 @@ export function UserMenu({ user, onLogout, onOpenProfile, onOpenSettings }: User
     <div className="user-menu" ref={menuRef}>
       {isOpen ? (
         <div className="user-menu-popover">
-          <button onClick={handleProfileClick} type="button">
-            Profile
-          </button>
           <button onClick={handleSettingsClick} type="button">
             Settings
           </button>
@@ -62,9 +54,17 @@ export function UserMenu({ user, onLogout, onOpenProfile, onOpenSettings }: User
         onClick={() => setIsOpen((currentValue) => !currentValue)}
         type="button"
       >
-        <span className="sidebar-user-avatar">
-          {(userLabel || "A").slice(0, 1).toUpperCase()}
-        </span>
+        {user?.profile_photo ? (
+          <img
+            className="sidebar-user-avatar sidebar-user-avatar-image"
+            alt="Profile"
+            src={new URL(user.profile_photo, API_BASE_URL).toString()}
+          />
+        ) : (
+          <span className="sidebar-user-avatar">
+            {(userLabel || "A").slice(0, 1).toUpperCase()}
+          </span>
+        )}
         <span className="sidebar-user-text">
           <strong>{userLabel}</strong>
           <small>{user?.role || "user"}</small>

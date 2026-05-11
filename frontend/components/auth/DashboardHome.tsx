@@ -53,6 +53,7 @@ export function DashboardHome({ initialMode = "strategy" }: DashboardHomeProps) 
     <DashboardWorkspace
       initialMode={initialMode}
       onLogout={handleLogout}
+      onUserUpdated={setUser}
       user={user}
     />
   );

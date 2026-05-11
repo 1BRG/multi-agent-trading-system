@@ -24,7 +24,31 @@ class BacktestRunSerializer(serializers.ModelSerializer):
         "created_at",
         "updated_at",
     )
-    read_only_fields = ("id", "user", "created_at", "updated_at")
+    read_only_fields = (
+        "id",
+        "user",
+        "status",
+        "metrics",
+        "equity_curve",
+        "trades",
+        "error_message",
+        "created_at",
+        "updated_at",
+    )
+
+  def validate(self, attrs):
+    attrs = super().validate(attrs)
+    start_date = attrs.get("start_date", getattr(self.instance, "start_date", None))
+    end_date = attrs.get("end_date", getattr(self.instance, "end_date", None))
+    initial_cash = attrs.get("initial_cash", getattr(self.instance, "initial_cash", None))
+
+    if start_date and end_date and start_date > end_date:
+      raise serializers.ValidationError({"end_date": "End date must be on or after start date."})
+
+    if initial_cash is not None and initial_cash <= 0:
+      raise serializers.ValidationError({"initial_cash": "Initial cash must be greater than zero."})
+
+    return attrs
 
   def validate_strategy(self, strategy):
     user = self.context["request"].user
