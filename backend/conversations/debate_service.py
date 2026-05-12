@@ -58,7 +58,7 @@ Rules:
 """
 
 
-def _call_llm(system_prompt: str, user_prompt: str) -> str:
+def _call_llm(system_prompt: str, user_prompt: str, response_format: str | None = None) -> str:
     """Send a prompt to the Ollama LLM and return the response text."""
     payload = {
         "model": LLM_MODEL,
@@ -66,6 +66,8 @@ def _call_llm(system_prompt: str, user_prompt: str) -> str:
         "prompt": user_prompt,
         "stream": False,
     }
+    if response_format:
+        payload["format"] = response_format
 
     with httpx.Client(timeout=300.0) as client:
         response = client.post(LLM_API_URL, json=payload)
@@ -188,7 +190,7 @@ def run_debate(session: DebateSession, asset: Asset) -> StockSignal:
             f"=== BULL REBUTTAL ===\n{bull_rebuttal}\n\n"
             f"Based on the above debate, render your verdict as JSON."
         )
-        judge_raw = _call_llm(JUDGE_SYSTEM, judge_prompt)
+        judge_raw = _call_llm(JUDGE_SYSTEM, judge_prompt, response_format="json")
         verdict = _parse_judge_json(judge_raw)
 
         _save_message(session, "Judge", "judge", 5, judge_raw)

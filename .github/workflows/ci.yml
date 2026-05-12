@@ -82,6 +82,9 @@ jobs:
       - name: Run migrations
         run: python manage.py migrate
 
+      - name: Run backend tests
+        run: python manage.py test
+
       - name: Check for missing migrations
         run: python manage.py makemigrations --check --dry-run
 
@@ -111,3 +114,6 @@ jobs:
 
       - name: ESLint
         run: npm run lint
+
+      - name: Frontend tests
+        run: npm run test
