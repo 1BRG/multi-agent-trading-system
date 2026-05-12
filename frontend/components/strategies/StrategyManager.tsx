@@ -129,7 +129,7 @@ export default function StrategyManager({ chatId, onChatCreated }: StrategyManag
                         try {
                           setIsLoading(true);
                           const { approveStrategy } = await import("../../lib/strategy");
-                          const updated = await approveStrategy(msg.metadata.strategyId);
+                          const updated = await approveStrategy(msg.metadata!.strategyId);
                           // update message metadata in-place
                           setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, metadata: { ...m.metadata, strategyStatus: updated.status } } : m));
                         } catch (e: any) {
