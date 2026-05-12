@@ -18,4 +18,5 @@ backend/media/
 
 # OS / editor
 .DS_Store
+.idea/
 *.swp

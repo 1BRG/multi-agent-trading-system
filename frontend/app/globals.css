@@ -1027,7 +1027,7 @@ button {
 .stock-detail-summary span,
 .portfolio-summary span,
 .workspace-card-label {
-  color: black;
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1745,7 +1745,7 @@ html[data-theme="light"] .stock-price-panel {
   display: grid;
   gap: 6px;
   padding: 14px;
-  color: white;
+  color: var(--text-primary);
 }
 
 .backtest-kpis strong {
