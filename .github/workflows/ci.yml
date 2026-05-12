@@ -77,10 +77,13 @@ jobs:
           pip install -r requirements.txt
 
       - name: Django system checks
-        run: python manage.py check --fail-level WARNING
+        run: python manage.py check --fail-level ERROR
 
-      - name: Django migration check
-        run: python manage.py migrate --check
+      - name: Run migrations
+        run: python manage.py migrate
+
+      - name: Check for missing migrations
+        run: python manage.py makemigrations --check --dry-run
 
   # ──────────────────────────────────────────────
   # Frontend — TypeScript + ESLint

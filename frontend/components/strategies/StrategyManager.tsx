@@ -50,7 +50,7 @@ export default function StrategyManager({ chatId, onChatCreated }: StrategyManag
     setError(null);
 
     try {
-      let currentThreadId = chatId ? Number(chatId) : null;
+      let currentThreadId: number | null = chatId ? Number(chatId) : null;
 
       if (!currentThreadId) {
         const generatedTitle = currentPrompt.length > 28 
@@ -63,8 +63,10 @@ export default function StrategyManager({ chatId, onChatCreated }: StrategyManag
         if (onChatCreated) onChatCreated(String(newThread.id));
       }
 
+      const threadId = currentThreadId!;
+
       // 1. Save user message
-      const userMsg = await createChatMessage(currentThreadId, "user", currentPrompt);
+      const userMsg = await createChatMessage(threadId, "user", currentPrompt);
       
       setMessages(prev => {
         if (prev.some(m => m.id === userMsg.id)) return prev;
@@ -72,11 +74,11 @@ export default function StrategyManager({ chatId, onChatCreated }: StrategyManag
       });
 
       // 2. Ask AI
-      const newStrategy = await generateAiStrategy(currentPrompt, currentThreadId);
+      const newStrategy = await generateAiStrategy(currentPrompt, threadId);
 
       // 3. Save AI message — include the strategy id and status so the UI can act on drafts
       const aiMsg = await createChatMessage(
-        currentThreadId,
+        threadId,
         "assistant",
         newStrategy.description,
         { strategyConfig: newStrategy.config, strategyName: newStrategy.name, strategyId: newStrategy.id, strategyStatus: newStrategy.status }
