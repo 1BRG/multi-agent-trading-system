@@ -1027,7 +1027,7 @@ button {
 .stock-detail-summary span,
 .portfolio-summary span,
 .workspace-card-label {
-  color: black;
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
