@@ -1745,7 +1745,7 @@ html[data-theme="light"] .stock-price-panel {
   display: grid;
   gap: 6px;
   padding: 14px;
-  color: white;
+  color: var(--text-primary);
 }
 
 .backtest-kpis strong {
