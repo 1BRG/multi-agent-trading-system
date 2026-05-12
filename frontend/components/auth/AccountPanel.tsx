@@ -12,9 +12,10 @@ import type {
 
 interface AccountPanelProps {
   embedded?: boolean;
+  onUserUpdated?: (user: User) => void;
 }
 
-export function AccountPanel({ embedded = false }: AccountPanelProps) {
+export function AccountPanel({ embedded = false, onUserUpdated }: AccountPanelProps) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [username, setUsername] = useState("");
@@ -67,8 +68,9 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
         body: payload,
       });
       setUser(updatedUser);
+      onUserUpdated?.(updatedUser);
       setProfilePhoto(null);
-      setMessage("Profilul a fost actualizat.");
+      setMessage("Profile updated successfully.");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Update failed.");
     } finally {
@@ -95,7 +97,7 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
         body: payload,
       });
       form.reset();
-      setMessage("Parola a fost schimbata.");
+      setMessage("Password changed successfully.");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Password update failed.");
     } finally {
@@ -106,6 +108,10 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
   async function handleDeactivateAccount() {
     setError(null);
     setMessage(null);
+
+    if (!confirm("Are you sure? This action cannot be undone.")) {
+      return;
+    }
 
     try {
       await apiRequest<void>("/users/me", { method: "DELETE" });
@@ -123,32 +129,183 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
 
   if (isLoading) {
     const LoadingShell = embedded ? "section" : "main";
-    return <LoadingShell className="page-shell">Loading...</LoadingShell>;
+    return <LoadingShell className="workspace-panel">Loading...</LoadingShell>;
   }
 
-  const Shell = embedded ? "section" : "main";
+  if (embedded) {
+    return (
+      <>
+        <div className="workspace-card">
+          <div className="section-header">
+            <div>
+              <p className="eyebrow">Profile</p>
+              <h2>Account details</h2>
+            </div>
+            <p className="muted">Manage your personal information.</p>
+          </div>
+
+          <form className="profile-form" onSubmit={handleProfileSubmit}>
+            <div className="profile-photo-section">
+              <div className="profile-photo-display">
+                {profilePhotoUrl ? (
+                  <img className="profile-photo" alt="Profile" src={profilePhotoUrl} />
+                ) : (
+                  <div className="profile-photo-placeholder">
+                    {(user?.username || user?.email || "U").slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <label className="field profile-photo-input">
+                <span>Profile photo</span>
+                <input
+                  accept="image/*"
+                  name="profile_photo"
+                  onChange={(event) => setProfilePhoto(event.target.files?.[0] ?? null)}
+                  type="file"
+                />
+              </label>
+            </div>
+
+            <label className="field">
+              <span>Username</span>
+              <input
+                autoComplete="username"
+                maxLength={150}
+                name="username"
+                onChange={(event) => setUsername(event.target.value)}
+                required
+                type="text"
+                value={username}
+              />
+            </label>
+
+            <label className="field">
+              <span>Email</span>
+              <input
+                autoComplete="email"
+                name="email"
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                type="email"
+                value={email}
+              />
+            </label>
+
+            <label className="field">
+              <span>Full name</span>
+              <input
+                autoComplete="name"
+                maxLength={255}
+                name="full_name"
+                onChange={(event) => setFullName(event.target.value)}
+                type="text"
+                value={fullName}
+              />
+            </label>
+
+            <button className="primary-button" disabled={isSavingProfile} type="submit">
+              {isSavingProfile ? "Saving..." : "Save profile"}
+            </button>
+          </form>
+        </div>
+
+        <div className="workspace-card">
+          <div className="section-header">
+            <div>
+              <p className="eyebrow">Security</p>
+              <h2>Change password</h2>
+            </div>
+            <p className="muted">Keep your account secure with a strong password.</p>
+          </div>
+
+          <form className="profile-form" onSubmit={handlePasswordSubmit}>
+            <label className="field">
+              <span>Current password</span>
+              <input
+                autoComplete="current-password"
+                name="current_password"
+                required
+                type="password"
+              />
+            </label>
+
+            <label className="field">
+              <span>New password</span>
+              <input
+                autoComplete="new-password"
+                minLength={8}
+                name="new_password"
+                required
+                type="password"
+              />
+            </label>
+
+            <button className="primary-button" disabled={isSavingPassword} type="submit">
+              {isSavingPassword ? "Updating..." : "Change password"}
+            </button>
+          </form>
+        </div>
+
+        <div className="workspace-card danger-card">
+          <div className="section-header">
+            <div>
+              <p className="eyebrow">Danger zone</p>
+              <h2>Deactivate account</h2>
+            </div>
+            <p className="muted">This action is permanent and cannot be undone.</p>
+          </div>
+
+          <button className="danger-button" onClick={handleDeactivateAccount} type="button">
+            Deactivate my account
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  const Shell = "main";
 
   return (
-    <Shell className="page-shell">
-      <section className="account-header">
+    <Shell className="workspace-panel profile-panel">
+      <div className="workspace-hero">
         <div>
           <p className="eyebrow">Account</p>
           <h1>{user?.full_name || user?.username || user?.email}</h1>
           <p className="muted">Role: {user?.role}</p>
         </div>
-      </section>
 
-      <section className="account-grid">
-        <form className="panel-form" onSubmit={handleProfileSubmit}>
-          <h2>Profile</h2>
-          <div className="profile-photo-row">
-            {profilePhotoUrl ? (
-              <img className="profile-photo" alt="Profile" src={profilePhotoUrl} />
-            ) : (
-              <div className="profile-photo-placeholder">
-                {(user?.username || user?.email || "U").slice(0, 1).toUpperCase()}
-              </div>
-            )}
+        {profilePhotoUrl ? (
+          <img className="profile-avatar" alt="Profile" src={profilePhotoUrl} />
+        ) : (
+          <div className="profile-avatar-placeholder">
+            {(user?.username || user?.email || "U").slice(0, 1).toUpperCase()}
+          </div>
+        )}
+      </div>
+
+      {message ? <p className="form-success">{message}</p> : null}
+      {error ? <p className="form-error">{error}</p> : null}
+
+      <div className="workspace-card">
+        <div className="section-header">
+          <div>
+            <p className="eyebrow">Profile</p>
+            <h2>Account details</h2>
+          </div>
+          <p className="muted">Manage your personal information.</p>
+        </div>
+
+        <form className="profile-form" onSubmit={handleProfileSubmit}>
+          <div className="profile-photo-section">
+            <div className="profile-photo-display">
+              {profilePhotoUrl ? (
+                <img className="profile-photo" alt="Profile" src={profilePhotoUrl} />
+              ) : (
+                <div className="profile-photo-placeholder">
+                  {(user?.username || user?.email || "U").slice(0, 1).toUpperCase()}
+                </div>
+              )}
+            </div>
             <label className="field profile-photo-input">
               <span>Profile photo</span>
               <input
@@ -159,6 +316,7 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
               />
             </label>
           </div>
+
           <label className="field">
             <span>Username</span>
             <input
@@ -171,6 +329,7 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
               value={username}
             />
           </label>
+
           <label className="field">
             <span>Email</span>
             <input
@@ -182,6 +341,7 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
               value={email}
             />
           </label>
+
           <label className="field">
             <span>Full name</span>
             <input
@@ -193,13 +353,23 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
               value={fullName}
             />
           </label>
+
           <button className="primary-button" disabled={isSavingProfile} type="submit">
             {isSavingProfile ? "Saving..." : "Save profile"}
           </button>
         </form>
+      </div>
 
-        <form className="panel-form" onSubmit={handlePasswordSubmit}>
-          <h2>Password</h2>
+      <div className="workspace-card">
+        <div className="section-header">
+          <div>
+            <p className="eyebrow">Security</p>
+            <h2>Change password</h2>
+          </div>
+          <p className="muted">Keep your account secure with a strong password.</p>
+        </div>
+
+        <form className="profile-form" onSubmit={handlePasswordSubmit}>
           <label className="field">
             <span>Current password</span>
             <input
@@ -209,6 +379,7 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
               type="password"
             />
           </label>
+
           <label className="field">
             <span>New password</span>
             <input
@@ -219,21 +390,26 @@ export function AccountPanel({ embedded = false }: AccountPanelProps) {
               type="password"
             />
           </label>
+
           <button className="primary-button" disabled={isSavingPassword} type="submit">
-            {isSavingPassword ? "Saving..." : "Change password"}
+            {isSavingPassword ? "Updating..." : "Change password"}
           </button>
         </form>
-      </section>
+      </div>
 
-      {message ? <p className="form-success">{message}</p> : null}
-      {error ? <p className="form-error">{error}</p> : null}
+      <div className="workspace-card danger-card">
+        <div className="section-header">
+          <div>
+            <p className="eyebrow">Danger zone</p>
+            <h2>Deactivate account</h2>
+          </div>
+          <p className="muted">This action is permanent and cannot be undone.</p>
+        </div>
 
-      <section className="danger-zone">
-        <h2>Deactivate account</h2>
         <button className="danger-button" onClick={handleDeactivateAccount} type="button">
           Deactivate my account
         </button>
-      </section>
+      </div>
     </Shell>
   );
 }

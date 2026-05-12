@@ -10,9 +10,10 @@ interface DashboardWorkspaceProps {
   initialMode?: WorkspaceMode;
   user: User | null;
   onLogout: () => void;
+  onUserUpdated: (user: User) => void;
 }
 
-export function DashboardWorkspace({ initialMode = "strategy", user, onLogout }: DashboardWorkspaceProps) {
+export function DashboardWorkspace({ initialMode = "strategy", user, onLogout, onUserUpdated }: DashboardWorkspaceProps) {
   const [activeMode, setActiveMode] = useState<WorkspaceMode>(initialMode);
   const [chatCategory, setChatCategory] = useState<ChatCategory>("strategy");
   
@@ -104,6 +105,7 @@ export function DashboardWorkspace({ initialMode = "strategy", user, onLogout }:
         <MainContent 
           activeChat={activeChat} 
           activeMode={activeMode} 
+          onUserUpdated={onUserUpdated}
           onChatCreated={handleChatCreated} 
         />
       </main>
