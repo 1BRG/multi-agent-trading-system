@@ -174,7 +174,6 @@ export function Sidebar({
         </div>
         <UserMenu
           onLogout={onLogout}
-          onOpenProfile={() => onModeChange("profile")}
           onOpenSettings={() => onModeChange("settings")}
           user={user}
         />
