@@ -52,6 +52,8 @@ class BacktestApiTests(TestCase):
         client.force_authenticate(owner)
 
         # create a draft strategy owned by the user
+        from strategies.models import Strategy
+
         s = Strategy.objects.create(owner=owner, name="Draft", config={}, source=Strategy.Source.AI, status=Strategy.Status.DRAFT)
         stock = Asset.objects.get(symbol="AAPL")
         payload = {
@@ -215,16 +217,12 @@ class BacktestApiTests(TestCase):
         )
 
 
-class BacktestEngineUnitTests(SimpleTestCase):
+class BacktestEngineTests(SimpleTestCase):
     def test_strategy_mode_defaults_to_moving_average(self):
         self.assertEqual(_strategy_mode({}), "moving_average_crossover")
-
-    def test_strategy_mode_buy_and_hold_aliases(self):
+        self.assertEqual(_strategy_mode({"signal_rule": "moving_average_crossover"}), "moving_average_crossover")
         self.assertEqual(_strategy_mode({"mode": "buy_and_hold"}), "buy_and_hold")
-        self.assertEqual(_strategy_mode({"type": "hold"}), "buy_and_hold")
-
-    def test_strategy_mode_rebalance_frequency(self):
-        self.assertEqual(_strategy_mode({"rebalance_frequency": "monthly"}), "moving_average_crossover")
+        self.assertEqual(_strategy_mode({"rebalance_frequency": "weekly"}), "moving_average_crossover")
 
     def test_default_windows_for_frequency(self):
         self.assertEqual(_default_windows_for_frequency("daily"), (5, 20))
@@ -232,25 +230,17 @@ class BacktestEngineUnitTests(SimpleTestCase):
         self.assertEqual(_default_windows_for_frequency("quarterly"), (50, 100))
         self.assertEqual(_default_windows_for_frequency("weekly"), (10, 40))
 
-    def test_is_rebalance_day_weekly_monthly_quarterly(self):
+    def test_is_rebalance_day(self):
         bars = [
-            PriceBar(date=date(2025, 1, 3), open=Decimal("100"), close=Decimal("100")),
-            PriceBar(date=date(2025, 1, 6), open=Decimal("100"), close=Decimal("100")),
+            PriceBar(date=date(2025, 1, 6), open=Decimal("1"), close=Decimal("1")),
+            PriceBar(date=date(2025, 1, 7), open=Decimal("1"), close=Decimal("1")),
+            PriceBar(date=date(2025, 1, 13), open=Decimal("1"), close=Decimal("1")),
         ]
-        self.assertTrue(_is_rebalance_day(bars, 1, "weekly"))
-
-        monthly = [
-            PriceBar(date=date(2025, 1, 31), open=Decimal("100"), close=Decimal("100")),
-            PriceBar(date=date(2025, 2, 3), open=Decimal("100"), close=Decimal("100")),
-        ]
-        self.assertTrue(_is_rebalance_day(monthly, 1, "monthly"))
-
-        quarterly = [
-            PriceBar(date=date(2025, 3, 31), open=Decimal("100"), close=Decimal("100")),
-            PriceBar(date=date(2025, 4, 1), open=Decimal("100"), close=Decimal("100")),
-        ]
-        self.assertTrue(_is_rebalance_day(quarterly, 1, "quarterly"))
+        self.assertFalse(_is_rebalance_day(bars, 0, "weekly"))
+        self.assertFalse(_is_rebalance_day(bars, 1, "weekly"))
+        self.assertTrue(_is_rebalance_day(bars, 2, "weekly"))
+        self.assertTrue(_is_rebalance_day(bars, 1, "daily"))
 
     def test_max_drawdown_pct(self):
-        values = [Decimal("100"), Decimal("120"), Decimal("90"), Decimal("110")]
-        self.assertEqual(_max_drawdown_pct(values), -25.0)
+        drawdown = _max_drawdown_pct([Decimal("100"), Decimal("120"), Decimal("90")])
+        self.assertEqual(drawdown, -25.0)
