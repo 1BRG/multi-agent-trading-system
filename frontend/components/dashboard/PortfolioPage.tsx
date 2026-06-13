@@ -689,7 +689,7 @@ export function PortfolioPage() {
                     </select>
                   </label>
                   {priceSource === "manual" ? (
-                    <label className="field">
+                    <label className="field portfolio-price-field">
                       <span>Purchase price</span>
                       <input
                         min="0.000001"
@@ -701,7 +701,7 @@ export function PortfolioPage() {
                       />
                     </label>
                   ) : (
-                    <label className="field">
+                    <label className="field portfolio-price-field">
                       <span>Purchase date</span>
                       <div className="date-input-row">
                         <input
@@ -772,29 +772,42 @@ export function PortfolioPage() {
                       <th>Quantity</th>
                       <th>Buy price</th>
                       <th>Current price</th>
-                      <th>Invested cost</th>
-                      <th>Current value</th>
-                      <th>Price date</th>
-                      <th></th>
+                      <th>Paid</th>
+                      <th>Value now</th>
+                      <th title="Market date used to resolve the buy price. Previous close can use a date before the purchase date.">
+                        Source date
+                      </th>
+                      <th aria-label="Actions"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {selectedPortfolio.holdings.map((holding) => (
                       <tr key={holding.id}>
-                        <td>{holding.asset_symbol}</td>
-                        <td>{holding.asset_name}</td>
-                        <td>{formatPercentRatio(getHoldingWeight(holding))}</td>
-                        <td>{holding.quantity ?? "-"}</td>
-                        <td>
+                        <td className="portfolio-symbol-cell">{holding.asset_symbol}</td>
+                        <td className="portfolio-name-cell">{holding.asset_name}</td>
+                        <td className="portfolio-number-cell">{formatPercentRatio(getHoldingWeight(holding))}</td>
+                        <td className="portfolio-number-cell">{holding.quantity ?? "-"}</td>
+                        <td className="portfolio-price-cell">
                           {holding.average_cost
-                            ? `${formatMoney(holding.average_cost, selectedPortfolio.base_currency)} (${formatPriceSource(holding.price_source)})`
+                            ? (
+                              <>
+                                <span>{formatMoney(holding.average_cost, selectedPortfolio.base_currency)}</span>
+                                <small>{formatPriceSource(holding.price_source)}</small>
+                              </>
+                            )
                             : "-"}
                         </td>
-                        <td>{numericPreview(getHoldingLatestPrice(holding), selectedPortfolio.base_currency)}</td>
-                        <td>{formatMoney(String(getHoldingInvestedCost(holding)), selectedPortfolio.base_currency)}</td>
-                        <td>{formatMoney(String(getHoldingMarketValue(holding)), selectedPortfolio.base_currency)}</td>
-                        <td>{formatDateForDisplay(holding.price_date ?? holding.purchase_date)}</td>
-                        <td>
+                        <td className="portfolio-number-cell">
+                          {numericPreview(getHoldingLatestPrice(holding), selectedPortfolio.base_currency)}
+                        </td>
+                        <td className="portfolio-number-cell">
+                          {formatMoney(String(getHoldingInvestedCost(holding)), selectedPortfolio.base_currency)}
+                        </td>
+                        <td className="portfolio-number-cell">
+                          {formatMoney(String(getHoldingMarketValue(holding)), selectedPortfolio.base_currency)}
+                        </td>
+                        <td className="portfolio-date-cell">{formatDateForDisplay(holding.price_date ?? holding.purchase_date)}</td>
+                        <td className="portfolio-action-cell">
                           <button
                             className="table-action-button"
                             onClick={() => handleDeleteHolding(holding.id)}
