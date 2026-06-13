@@ -4,9 +4,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from conversations.models import ChatMessage
+from strategies import ai_service
 from strategies.models import Strategy
 from strategies.serializers import StrategySerializer
-from strategies.ai_service import generate_strategy_rules
 
 
 class IsOwnerOrReadOnlyPublic(permissions.BasePermission):
@@ -47,7 +47,7 @@ class StrategyViewSet(viewsets.ModelViewSet):
 
         # 2. Ask the AI 
         try:
-            ai_result = generate_strategy_rules(messages_history)
+            ai_result = ai_service.generate_strategy_rules(messages_history)
             ai_output = ai_result.get("parsed", {})
             raw_llm = ai_result.get("raw", "")
         except ValueError as e:

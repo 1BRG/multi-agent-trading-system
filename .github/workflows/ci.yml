@@ -85,6 +85,9 @@ jobs:
       - name: Check for missing migrations
         run: python manage.py makemigrations --check --dry-run
 
+      - name: Run backend tests and agent evals
+        run: python manage.py test accounts market strategies backtests conversations portfolios
+
   # ──────────────────────────────────────────────
   # Frontend — TypeScript + ESLint
   # ──────────────────────────────────────────────

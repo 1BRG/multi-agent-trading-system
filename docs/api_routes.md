@@ -126,6 +126,7 @@ Portfolio endpoints require a bearer token and are scoped to the current user.
 | `DELETE` | `/portfolios/{portfolio_id}` | Bearer token | Deletes one owned portfolio. |
 | `GET` | `/portfolio-holdings` | Bearer token | Lists holdings from current user's portfolios. |
 | `POST` | `/portfolio-holdings` | Bearer token | Adds a holding to one owned portfolio. |
+| `GET` | `/portfolio-holdings/resolve-price?asset={asset_id}&purchase_date=YYYY-MM-DD&price_source=previous_close` | Bearer token | Resolves the purchase price preview from stored market prices. `price_source` accepts `market_close` or `previous_close`. |
 | `GET` | `/portfolio-holdings/{holding_id}` | Bearer token | Returns one owned holding. |
 | `PATCH` | `/portfolio-holdings/{holding_id}` | Bearer token | Updates one owned holding. |
 | `DELETE` | `/portfolio-holdings/{holding_id}` | Bearer token | Deletes one owned holding. |
@@ -135,23 +136,39 @@ Create portfolio payload:
 ```json
 {
   "name": "Core Portfolio",
-  "cash": "2500.00",
   "base_currency": "USD",
   "description": "Long-term holdings"
 }
 ```
 
-Create holding payload:
+The current UI does not ask for cash. Invested cost, current value and dynamic investment weights are derived from holdings.
+
+Create holding payload with market price lookup:
 
 ```json
 {
   "portfolio": 1,
   "asset": 1,
-  "target_weight": "0.2500",
   "quantity": "10.00000000",
+  "purchase_date": "2025-01-03",
+  "price_source": "previous_close"
+}
+```
+
+Create holding payload with custom price:
+
+```json
+{
+  "portfolio": 1,
+  "asset": 1,
+  "quantity": "10.00000000",
+  "price_source": "manual",
   "average_cost": "185.000000"
 }
 ```
+
+For market price modes, `average_cost` and `price_date` are calculated by the server. For manual mode, `purchase_date` and `price_date` must be empty.
+Investment weight is calculated by the UI from each position's cost basis relative to the portfolio's total invested cost.
 
 ## Router Endpoints
 
