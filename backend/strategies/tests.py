@@ -30,8 +30,27 @@ class StrategyApiTests(TestCase):
     # Patch the ai_service to return a predictable response
     from strategies import ai_service
 
-    def mock_generate(prompt):
-      return {"parsed": {"name": "Mock AI", "description": "mock", "config": {"rebalance_frequency": "weekly", "ranking_metric": "conviction", "portfolio_size": 3, "sizing": "equal_weight", "sector_cap_pct": 100, "exit_on_signal_flip": True}}, "raw": "RAW TEXT"}
+    def mock_generate(messages_history):
+      self.assertEqual(messages_history[-1], {"role": "user", "content": "make me a strategy"})
+      return {
+          "parsed": {
+              "name": "Mock AI",
+              "description": "mock",
+              "config": {
+                  "signal_rule": "moving_average_crossover",
+                  "short_window": 10,
+                  "long_window": 40,
+                  "rebalance_frequency": "weekly",
+                  "ranking_metric": "conviction",
+                  "portfolio_size": 3,
+                  "sizing": "equal_weight",
+                  "sector_cap_pct": 100,
+                  "exit_on_signal_flip": True,
+                  "min_conviction_score": 0.65,
+              },
+          },
+          "raw": "RAW TEXT",
+      }
 
     original = ai_service.generate_strategy_rules
     ai_service.generate_strategy_rules = mock_generate
