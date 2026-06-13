@@ -96,6 +96,18 @@ class AuthApiTests(TestCase):
     self.assertEqual(response.status_code, 401)
     self.assertNotIn("access_token", response.data)
 
+  def test_login_invalid_password_returns_clear_message(self):
+    User.objects.create_user(username="alice", email="alice@example.com", password="password123")
+
+    response = self.client.post(
+        "/auth/login",
+        {"identifier": "alice", "password": "wrongpassword"},
+        format="json",
+    )
+
+    self.assertEqual(response.status_code, 401)
+    self.assertEqual(response.data["detail"], "Invalid username/email or password.")
+
   def test_profile_update_rejects_sql_like_username(self):
     user = User.objects.create_user(username="alice", email="alice@example.com", password="password123")
     self.client.force_authenticate(user=user)

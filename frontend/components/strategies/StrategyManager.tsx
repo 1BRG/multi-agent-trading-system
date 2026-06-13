@@ -96,7 +96,7 @@ export default function StrategyManager({ chatId, onChatCreated }: StrategyManag
     setToast(null);
 
     try {
-      let currentThreadId = chatId ? Number(chatId) : null;
+      let currentThreadId: number | null = chatId ? Number(chatId) : null;
 
       if (!currentThreadId) {
         const generatedTitle = currentPrompt.length > 28 

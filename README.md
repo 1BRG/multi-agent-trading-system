@@ -90,8 +90,27 @@ An interactive AI Strategy Manager that translates qualitative natural-language 
 
 ### 4. Layout and Frontend
 - Persistent sidebar with real chat history persisted in PostgreSQL.
-- Dedicated workspaces for Stocks, Portfolios, Debates, and Strategy Formulation.
+- Dedicated workspaces for Stocks, Portfolios, Debates, Strategy Formulation, and Backtesting.
 - Stocks UI listing all supported assets (`AAPL`, `MSFT`, `SPY`, `GLD`, etc.) with date range selectors.
+
+### 5. Portfolio Tracking and Backtesting
+- Portfolio workspace for creating portfolios, adding holdings, resolving historical buy prices, and viewing dynamic position weights.
+- Backtesting workspace for approved strategies using stored PostgreSQL OHLCV data.
+- Backtest results include final equity, total return, annualized return, benchmark return, max drawdown, volatility, Sharpe ratio, equity curve and trade history.
+
+---
+
+## MDS Grading Evidence
+
+The repository evidence for the MDS laboratory grading rubric is tracked in:
+
+- Grading checklist: `docs/grading_evidence.md`
+- Architecture and workflow diagrams: `docs/diagrams.md`
+- AI development usage report: `docs/ai_usage_report.md`
+- Portfolio bug report handled on the grading branch: `docs/bug_report_portfolio.md`
+
+The product backlog and user stories are tracked in Linear and should be exported or linked in
+`docs/grading_evidence.md` before final submission.
 
 ---
 
@@ -108,17 +127,17 @@ GET    /portfolios
 POST   /debates/run_debate           (Executes the 5-round Bull/Bear/Judge workflow)
 POST   /strategies/generate_ai       (Generates AI JSON ruleset with chat history)
 PATCH  /strategies/{id}/approve      (Approves a Draft strategy for backtesting)
+POST   /backtests                    (Runs an approved strategy on stored OHLCV data)
 ```
 
 ---
 
 ## Planned Features (Future Work)
 
-### 1. The Vectorbt Backtesting Engine
-- Real backtesting engine powered by the `vectorbt` library.
-- Execution endpoint consuming the approved `Strategy.config` JSON and `StockSignal` conviction scores.
-- Results dashboard displaying Annualized Return, Sharpe ratio, Maximum Drawdown, and Equity Curve.
-- Strict enforcement of local PostgreSQL price data usage (rebalancing on day $T$ only using data from day $T-1$).
+### 1. Backtesting Engine Upgrade
+- Optional future migration from the current custom deterministic engine to `vectorbt`.
+- Multi-asset portfolio allocation backtests consuming the full approved `Strategy.config` JSON and `StockSignal` conviction scores.
+- Strict enforcement of local PostgreSQL price data usage for all future multi-asset strategies.
 
 ### 2. Institutional Trading Metrics
 To scale the backtester to production hedge-fund standards, future iterations will include:
@@ -132,7 +151,7 @@ To scale the backtester to production hedge-fund standards, future iterations wi
 
 Run backend tests:
 ```bash
-docker compose exec backend python manage.py test
+docker compose exec backend python manage.py test accounts market strategies backtests conversations portfolios
 ```
 
 Run Django system checks:

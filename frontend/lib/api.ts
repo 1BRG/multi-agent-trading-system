@@ -87,11 +87,19 @@ export async function apiRequest<T>(
     }
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...requestOptions,
-    body: requestBody,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...requestOptions,
+      body: requestBody,
+      headers,
+    });
+  } catch {
+    throw new ApiError(
+      "Could not reach the server. Check that the backend is running.",
+      0,
+    );
+  }
 
   if (!response.ok) {
     throw new ApiError(await getErrorMessage(response), response.status);

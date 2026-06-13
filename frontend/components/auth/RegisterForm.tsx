@@ -107,7 +107,7 @@ export function RegisterForm() {
       <SocialLoginButtons />
 
       <p className="form-footer">
-        Ai deja cont? <Link href="/login">Intra in cont</Link>
+        Already have an account? <Link href="/login">Sign in</Link>
       </p>
     </form>
   );

@@ -113,7 +113,7 @@ Portfolios are private to the authenticated user that owns them. Holdings refere
 | `id` | integer | primary key | Internal portfolio id. |
 | `user_id` | integer | FK to `accounts_user`, unique with `name` | Portfolio owner. |
 | `name` | varchar(255) | unique with `user_id` | Portfolio name. |
-| `cash` | decimal(14, 2) | default `0` | Cash balance tracked for the portfolio. |
+| `cash` | decimal(14, 2) | default `0`, non-negative | Reserved for future cash tracking. The current portfolio UI derives value from holdings, not this column. |
 | `base_currency` | varchar(10) | default `USD` | Portfolio reporting currency. |
 | `description` | text | blank allowed | Optional description. |
 | `created_at` | timestamp with timezone | not null | Creation timestamp. |
@@ -122,6 +122,7 @@ Portfolios are private to the authenticated user that owns them. Holdings refere
 Constraints and indexes:
 
 - Unique constraint: `portfolio_user_name_unique` on `(user_id, name)`.
+- Check constraint: `portfolio_cash_non_negative` keeps `cash >= 0`.
 - Index: `portfolio_user_name_idx` on `(user_id, name)`.
 
 ### `portfolio_holdings`
@@ -131,9 +132,12 @@ Constraints and indexes:
 | `id` | integer | primary key | Internal holding id. |
 | `portfolio_id` | integer | FK to `portfolios`, unique with `asset_id` | Parent portfolio. |
 | `asset_id` | integer | FK to `assets`, unique with `portfolio_id` | Held asset. |
-| `target_weight` | decimal(6, 4) | between `0` and `1` | Intended allocation weight, for example `0.2500` for 25%. |
-| `quantity` | decimal(20, 8) | nullable | Optional tracked units/shares. |
-| `average_cost` | decimal(18, 6) | nullable | Optional average entry cost. |
+| `target_weight` | decimal(6, 4) | between `0` and `1`, default `0` | Legacy/planned target allocation field. The current UI calculates investment weight dynamically from cost basis. |
+| `quantity` | decimal(20, 8) | nullable, non-negative | Optional tracked units/shares. |
+| `average_cost` | decimal(18, 6) | nullable, non-negative | Average entry cost. For market price modes this is resolved from `asset_prices.close`; for manual mode it is supplied by the user. |
+| `purchase_date` | date | nullable | User-provided purchase date used for market price lookup. Empty for custom price mode. |
+| `price_date` | date | nullable, `<= purchase_date` | Actual market date used for the cost basis. May be before `purchase_date` when previous close is used. |
+| `price_source` | varchar(20) | `market_close` / `previous_close` / `manual` / `unknown` | How `average_cost` was determined. |
 | `created_at` | timestamp with timezone | not null | Creation timestamp. |
 | `updated_at` | timestamp with timezone | not null | Last update timestamp. |
 
@@ -141,6 +145,9 @@ Constraints and indexes:
 
 - Unique constraint: `pf_hold_port_asset_uniq` on `(portfolio_id, asset_id)`.
 - Check constraint: `pf_hold_weight_range` keeps `target_weight` between `0` and `1`.
+- Check constraint: `pf_hold_quantity_non_negative` keeps `quantity >= 0` when present.
+- Check constraint: `pf_hold_average_cost_non_negative` keeps `average_cost >= 0` when present.
+- Check constraint: `pf_hold_price_date_not_after_purchase` prevents a resolved market price date after the requested purchase date.
 - Index: `pf_hold_port_asset_idx` on `(portfolio_id, asset_id)`.
 
 ## Strategies
