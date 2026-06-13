@@ -7,6 +7,9 @@ import { ThemeProvider } from "../components/ThemeProvider";
 export const metadata: Metadata = {
   title: "AI Stock Lab",
   description: "AI-assisted stock analysis and backtesting platform",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
