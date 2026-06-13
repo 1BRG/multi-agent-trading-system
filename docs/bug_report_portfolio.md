@@ -29,7 +29,7 @@ The Portfolio workspace allowed confusing or contradictory position data and dis
 
 ## Resolution
 
-Implemented on branch `stefan-grading-evidence`:
+Implemented on branch `feature/portfolio-workflow-hardening`:
 
 - Added purchase-date price resolution through stored `asset_prices`.
 - Added backend validation for price source, purchase date, price date and cost basis.
