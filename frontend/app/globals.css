@@ -1919,10 +1919,14 @@ html[data-theme="light"] .stock-price-panel {
 .portfolio-position-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .portfolio-position-grid .field:first-child {
+  grid-column: span 2;
+}
+
+.portfolio-price-field {
   grid-column: span 2;
 }
 
@@ -1968,51 +1972,48 @@ html[data-theme="light"] .stock-price-panel {
 
 .portfolio-holdings-wrap .stocks-table,
 .portfolio-holdings-table {
-  min-width: 0;
-  table-layout: fixed;
+  min-width: 1180px;
+  table-layout: auto;
 }
 
 .portfolio-holdings-table th,
 .portfolio-holdings-table td {
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
-.portfolio-holdings-table th:nth-child(1),
-.portfolio-holdings-table td:nth-child(1) {
-  width: 8%;
+.portfolio-holdings-table th {
+  letter-spacing: 0.04em;
 }
 
-.portfolio-holdings-table th:nth-child(2),
-.portfolio-holdings-table td:nth-child(2) {
-  width: 16%;
+.portfolio-symbol-cell {
+  min-width: 76px;
 }
 
-.portfolio-holdings-table th:nth-child(3),
-.portfolio-holdings-table td:nth-child(3),
-.portfolio-holdings-table th:nth-child(4),
-.portfolio-holdings-table td:nth-child(4),
-.portfolio-holdings-table th:nth-child(9),
-.portfolio-holdings-table td:nth-child(9) {
-  width: 8%;
+.portfolio-name-cell {
+  min-width: 180px;
+  white-space: normal;
 }
 
-.portfolio-holdings-table th:nth-child(5),
-.portfolio-holdings-table td:nth-child(5),
-.portfolio-holdings-table th:nth-child(6),
-.portfolio-holdings-table td:nth-child(6) {
-  width: 11%;
+.portfolio-number-cell,
+.portfolio-date-cell {
+  min-width: 104px;
 }
 
-.portfolio-holdings-table th:nth-child(7),
-.portfolio-holdings-table td:nth-child(7),
-.portfolio-holdings-table th:nth-child(8),
-.portfolio-holdings-table td:nth-child(8) {
-  width: 12%;
+.portfolio-price-cell {
+  display: grid;
+  gap: 4px;
+  min-width: 136px;
 }
 
-.portfolio-holdings-table th:nth-child(10),
-.portfolio-holdings-table td:nth-child(10) {
-  width: 6%;
+.portfolio-price-cell small {
+  color: #94a7d2;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.portfolio-action-cell {
+  min-width: 86px;
+  text-align: right;
 }
 
 .table-action-button {
@@ -3490,7 +3491,8 @@ html[data-theme="light"] .portfolio-detail-header {
     display: grid;
   }
 
-  .portfolio-position-grid .field:first-child {
+  .portfolio-position-grid .field:first-child,
+  .portfolio-price-field {
     grid-column: auto;
   }
 }

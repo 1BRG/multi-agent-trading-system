@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { apiRequest } from "../../lib/api";
+import { ApiError, apiRequest } from "../../lib/api";
 import { clearStoredAppState, setAccessToken } from "../../lib/auth";
 import type { AuthResponse, LoginPayload } from "../../types/auth";
 import { SocialLoginButtons } from "./SocialLoginButtons";
@@ -37,7 +37,11 @@ export function LoginForm() {
       router.push("/dashboard");
       router.refresh();
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Login failed.");
+      if (caughtError instanceof ApiError && caughtError.status === 401) {
+        setError("Invalid username/email or password.");
+      } else {
+        setError(caughtError instanceof Error ? caughtError.message : "Login failed.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -76,7 +80,7 @@ export function LoginForm() {
       <SocialLoginButtons />
 
       <p className="form-footer">
-        Nu ai cont? <Link href="/register">Creeaza unul</Link>
+        No account yet? <Link href="/register">Create one</Link>
       </p>
     </form>
   );
