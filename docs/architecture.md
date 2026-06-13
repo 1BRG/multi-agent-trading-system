@@ -60,7 +60,8 @@ Implemented workspace areas:
 - Portfolio page for creating user portfolios and managing holdings.
 - Interactive interface for Strategy formulation and historical chat memory.
 - Fully implemented Debate Mode UI showing agent transcripts and conviction ring charts.
-- Placeholder page for Backtesting and Settings.
+- Backtesting page for running approved strategies on stored OHLCV data and reviewing metrics, equity curve previews and trades.
+- Placeholder page for Settings.
 Profile page embedded through the sidebar user menu.
 
 The sidebar state is persisted after refresh. The Stocks page keeps the selected asset, but the default date range is the last month to avoid loading all historical prices by default.
@@ -77,6 +78,6 @@ See `docs/api_routes.md` for route details.
 
 ## Pending Architecture Work
 
-- Real backtesting engine.
+- Multi-asset backtesting engine and richer strategy allocation rules.
 - Scheduled market data update runner, for example cron or Celery Beat.
 - Production Docker images and production static/media handling.
