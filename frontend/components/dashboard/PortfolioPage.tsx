@@ -506,6 +506,23 @@ export function PortfolioPage() {
     return value / denominator;
   }
 
+  function getHoldingDateLabel(holding: Portfolio["holdings"][number]) {
+    const buyDate = formatDateForDisplay(holding.purchase_date);
+    const priceDate = formatDateForDisplay(holding.price_date);
+
+    if (holding.price_source === "manual") {
+      return {
+        primary: buyDate === "-" ? "Custom price" : buyDate,
+        secondary: "Manual entry",
+      };
+    }
+
+    return {
+      primary: buyDate,
+      secondary: priceDate !== "-" && priceDate !== buyDate ? `Priced ${priceDate}` : formatPriceSource(holding.price_source),
+    };
+  }
+
   return (
     <section className="workspace-panel portfolio-panel">
       <div className="workspace-hero">
@@ -774,50 +791,57 @@ export function PortfolioPage() {
                       <th>Current price</th>
                       <th>Paid</th>
                       <th>Value now</th>
-                      <th title="Market date used to resolve the buy price. Previous close can use a date before the purchase date.">
-                        Source date
+                      <th title="Purchase date, with the market price date shown below when it differs.">
+                        Buy date
                       </th>
                       <th aria-label="Actions"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedPortfolio.holdings.map((holding) => (
-                      <tr key={holding.id}>
-                        <td className="portfolio-symbol-cell">{holding.asset_symbol}</td>
-                        <td className="portfolio-name-cell">{holding.asset_name}</td>
-                        <td className="portfolio-number-cell">{formatPercentRatio(getHoldingWeight(holding))}</td>
-                        <td className="portfolio-number-cell">{holding.quantity ?? "-"}</td>
-                        <td className="portfolio-price-cell">
-                          {holding.average_cost
-                            ? (
-                              <>
-                                <span>{formatMoney(holding.average_cost, selectedPortfolio.base_currency)}</span>
-                                <small>{formatPriceSource(holding.price_source)}</small>
-                              </>
-                            )
-                            : "-"}
-                        </td>
-                        <td className="portfolio-number-cell">
-                          {numericPreview(getHoldingLatestPrice(holding), selectedPortfolio.base_currency)}
-                        </td>
-                        <td className="portfolio-number-cell">
-                          {formatMoney(String(getHoldingInvestedCost(holding)), selectedPortfolio.base_currency)}
-                        </td>
-                        <td className="portfolio-number-cell">
-                          {formatMoney(String(getHoldingMarketValue(holding)), selectedPortfolio.base_currency)}
-                        </td>
-                        <td className="portfolio-date-cell">{formatDateForDisplay(holding.price_date ?? holding.purchase_date)}</td>
-                        <td className="portfolio-action-cell">
-                          <button
-                            className="table-action-button"
-                            onClick={() => handleDeleteHolding(holding.id)}
-                            type="button"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {selectedPortfolio.holdings.map((holding) => {
+                      const dateLabel = getHoldingDateLabel(holding);
+
+                      return (
+                        <tr key={holding.id}>
+                          <td className="portfolio-symbol-cell">{holding.asset_symbol}</td>
+                          <td className="portfolio-name-cell">{holding.asset_name}</td>
+                          <td className="portfolio-number-cell">{formatPercentRatio(getHoldingWeight(holding))}</td>
+                          <td className="portfolio-number-cell">{holding.quantity ?? "-"}</td>
+                          <td className="portfolio-price-cell">
+                            {holding.average_cost
+                              ? (
+                                <>
+                                  <span>{formatMoney(holding.average_cost, selectedPortfolio.base_currency)}</span>
+                                  <small>{formatPriceSource(holding.price_source)}</small>
+                                </>
+                              )
+                              : "-"}
+                          </td>
+                          <td className="portfolio-number-cell">
+                            {numericPreview(getHoldingLatestPrice(holding), selectedPortfolio.base_currency)}
+                          </td>
+                          <td className="portfolio-number-cell">
+                            {formatMoney(String(getHoldingInvestedCost(holding)), selectedPortfolio.base_currency)}
+                          </td>
+                          <td className="portfolio-number-cell">
+                            {formatMoney(String(getHoldingMarketValue(holding)), selectedPortfolio.base_currency)}
+                          </td>
+                          <td className="portfolio-date-cell">
+                            <span>{dateLabel.primary}</span>
+                            <small>{dateLabel.secondary}</small>
+                          </td>
+                          <td className="portfolio-action-cell">
+                            <button
+                              className="table-action-button"
+                              onClick={() => handleDeleteHolding(holding.id)}
+                              type="button"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                     {selectedPortfolio.holdings.length === 0 ? (
                       <tr>
                         <td colSpan={10}>No holdings yet.</td>

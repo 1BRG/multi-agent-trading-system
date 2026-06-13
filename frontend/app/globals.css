@@ -1999,6 +1999,17 @@ html[data-theme="light"] .stock-price-panel {
   min-width: 104px;
 }
 
+.portfolio-date-cell {
+  display: grid;
+  gap: 4px;
+}
+
+.portfolio-date-cell small {
+  color: #94a7d2;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .portfolio-price-cell {
   display: grid;
   gap: 4px;
