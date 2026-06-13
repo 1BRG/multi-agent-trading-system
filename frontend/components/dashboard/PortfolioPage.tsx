@@ -720,7 +720,7 @@ export function PortfolioPage() {
                   ) : (
                     <label className="field portfolio-price-field">
                       <span>Purchase date</span>
-                      <div className="date-input-row">
+                      <div className="date-picker-control">
                         <input
                           inputMode="numeric"
                           maxLength={10}
@@ -729,13 +729,23 @@ export function PortfolioPage() {
                           type="text"
                           value={purchaseDate}
                         />
-                        <input
-                          aria-label="Select purchase date from calendar"
-                          className="portfolio-calendar-input"
-                          onChange={(event) => setPurchaseDate(formatIsoDateForDisplay(event.target.value))}
-                          type="date"
-                          value={parseDisplayDate(purchaseDate) ?? ""}
-                        />
+                        <span className="date-picker-calendar" title="Open calendar">
+                          <svg
+                            aria-hidden="true"
+                            focusable="false"
+                            viewBox="0 0 16 16"
+                          >
+                            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
+                          </svg>
+                          <input
+                            aria-label="Select purchase date from calendar"
+                            lang="en-GB"
+                            onChange={(event) => setPurchaseDate(formatIsoDateForDisplay(event.target.value))}
+                            tabIndex={-1}
+                            type="date"
+                            value={parseDisplayDate(purchaseDate) ?? ""}
+                          />
+                        </span>
                       </div>
                     </label>
                   )}

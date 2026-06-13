@@ -1614,28 +1614,6 @@ html[data-theme="light"] .stock-price-panel {
   outline: none;
 }
 
-.date-input-row {
-  display: grid;
-  gap: 8px;
-  grid-template-columns: minmax(0, 1fr) 46px;
-}
-
-.portfolio-calendar-input {
-  cursor: pointer;
-  min-width: 0;
-  padding: 10px 8px;
-}
-
-.portfolio-calendar-input::-webkit-datetime-edit {
-  display: none;
-}
-
-.portfolio-calendar-input::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  filter: invert(1);
-  margin: 0 auto;
-}
-
 .auth-card .field span {
   color: #c2cff6;
 }
@@ -3292,10 +3270,6 @@ html[data-theme="light"] .field select::placeholder,
 html[data-theme="light"] .chat-composer input::placeholder,
 html[data-theme="light"] .stock-search input::placeholder {
   color: var(--text-muted);
-}
-
-html[data-theme="light"] .portfolio-calendar-input::-webkit-calendar-picker-indicator {
-  filter: none;
 }
 
 html[data-theme="light"] .sidebar-user-avatar {
