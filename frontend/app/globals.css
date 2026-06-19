@@ -289,7 +289,10 @@ button {
 }
 
 .landing-hero {
-  max-width: 760px;
+  align-items: center;
+  display: grid;
+  gap: 42px;
+  grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
 }
 
 .landing-eyebrow {
@@ -303,8 +306,8 @@ button {
 
 .landing-hero h1 {
   color: #f4f7ff;
-  font-size: clamp(36px, 7vw, 66px);
-  letter-spacing: -0.02em;
+  font-size: 64px;
+  letter-spacing: 0;
   line-height: 1.03;
   margin: 0;
   max-width: 16ch;
@@ -376,6 +379,186 @@ button {
   color: #f3f7ff;
   font-size: 24px;
   letter-spacing: 0.01em;
+}
+
+.landing-product-preview {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 10%) 0%, rgb(255 255 255 / 4%) 100%),
+    rgb(7 12 24 / 84%);
+  border: 1px solid rgb(170 191 255 / 24%);
+  border-radius: 8px;
+  box-shadow:
+    0 28px 80px rgb(0 0 0 / 34%),
+    inset 0 1px 0 rgb(255 255 255 / 10%);
+  display: grid;
+  gap: 16px;
+  overflow: hidden;
+  padding: 16px;
+  position: relative;
+}
+
+.landing-product-preview::before {
+  background: linear-gradient(90deg, transparent, rgb(78 232 255 / 22%), transparent);
+  content: "";
+  height: 1px;
+  left: 18px;
+  position: absolute;
+  right: 18px;
+  top: 0;
+}
+
+.preview-topbar {
+  align-items: center;
+  color: #aebadc;
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preview-topbar span {
+  background: #4ee8ff;
+  border-radius: 50%;
+  height: 8px;
+  opacity: 0.9;
+  width: 8px;
+}
+
+.preview-topbar span:nth-child(2) {
+  background: #7b9bff;
+}
+
+.preview-topbar span:nth-child(3) {
+  background: #85f5c5;
+}
+
+.preview-topbar strong {
+  margin-left: auto;
+}
+
+.preview-market-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.preview-market-row article,
+.preview-chart-card,
+.preview-verdict,
+.preview-json {
+  background: rgb(255 255 255 / 5%);
+  border: 1px solid rgb(170 191 255 / 18%);
+  border-radius: 8px;
+}
+
+.preview-market-row article {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.preview-market-row span,
+.preview-card-header span,
+.preview-verdict span {
+  color: #94a1cc;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preview-market-row strong {
+  color: #f5f8ff;
+  font-size: 17px;
+  line-height: 1.1;
+}
+
+.preview-market-row small {
+  color: #85f5c5;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.preview-market-row small.is-negative {
+  color: #ff9aaf;
+}
+
+.preview-chart-card {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.preview-card-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.preview-card-header strong {
+  color: #85f5c5;
+  font-size: 18px;
+}
+
+.preview-chart {
+  align-items: end;
+  background:
+    linear-gradient(rgb(255 255 255 / 5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 5%) 1px, transparent 1px);
+  background-size: 100% 33%, 12.5% 100%;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  height: 150px;
+  padding-top: 8px;
+}
+
+.preview-chart span {
+  background: linear-gradient(180deg, #4ee8ff 0%, #6e8eff 100%);
+  border-radius: 8px 8px 3px 3px;
+  box-shadow: 0 8px 24px rgb(78 232 255 / 16%);
+  min-height: 28px;
+}
+
+.preview-insight-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1.1fr 0.9fr;
+}
+
+.preview-verdict {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.preview-verdict strong {
+  color: #85f5c5;
+  font-size: 26px;
+}
+
+.preview-verdict p {
+  color: #b9c4e6;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.preview-json {
+  color: #cfe6ff;
+  display: grid;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  gap: 5px;
+  padding: 14px;
+}
+
+.preview-json code {
+  color: #e8efff;
+  padding-left: 10px;
 }
 
 .landing-grid {
@@ -3368,6 +3551,22 @@ html[data-theme="light"] .portfolio-detail-header {
   color: var(--text-primary);
 }
 
+@media (max-width: 980px) {
+  .landing-hero {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero h1 {
+    max-width: 18ch;
+  }
+
+  .landing-product-preview {
+    max-width: 640px;
+    width: 100%;
+  }
+}
+
 @media (max-width: 720px) {
   .workspace-layout {
     grid-template-columns: 1fr;
@@ -3437,11 +3636,20 @@ html[data-theme="light"] .portfolio-detail-header {
   }
 
   .landing-hero h1 {
-    font-size: clamp(30px, 10vw, 50px);
+    font-size: 40px;
   }
 
   .landing-copy {
     font-size: 16px;
+  }
+
+  .preview-market-row,
+  .preview-insight-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-chart {
+    height: 120px;
   }
 
   .landing-metrics,
