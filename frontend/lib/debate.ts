@@ -17,3 +17,7 @@ export async function getDebateSessions(): Promise<DebateSession[]> {
 export async function getDebateSession(id: number): Promise<DebateSessionDetail> {
   return apiRequest<DebateSessionDetail>(`/debates/${id}`);
 }
+
+export async function deleteDebateSession(id: number): Promise<void> {
+  return apiRequest<void>(`/debates/${id}`, { method: "DELETE" });
+}

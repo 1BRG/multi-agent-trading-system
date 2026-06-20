@@ -40,6 +40,11 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
 class DebateSessionViewSet(viewsets.ModelViewSet):
   serializer_class = DebateSessionSerializer
 
+  def get_serializer_class(self):
+    if self.action == "retrieve":
+      return DebateSessionDetailSerializer
+    return DebateSessionSerializer
+
   def get_queryset(self):
     return DebateSession.objects.filter(user=self.request.user).select_related("stock", "user")
 
