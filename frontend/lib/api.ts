@@ -29,6 +29,32 @@ function isJsonBody(body: ApiRequestOptions["body"]): body is object {
   );
 }
 
+function formatErrorValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.map(formatErrorValue).filter(Boolean).join(", ");
+  }
+
+  if (value && typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .map(([field, fieldValue]) => {
+        const message = formatErrorValue(fieldValue);
+        return message ? `${field}: ${message}` : "";
+      })
+      .filter(Boolean)
+      .join("; ");
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value);
+}
+
 async function getErrorMessage(response: Response): Promise<string> {
   try {
     const payload: unknown = await response.json();
@@ -46,16 +72,10 @@ async function getErrorMessage(response: Response): Promise<string> {
     if (payload && typeof payload === "object") {
       return Object.entries(payload as Record<string, unknown>)
         .map(([field, value]) => {
-          if (Array.isArray(value)) {
-            return `${field}: ${value.join(", ")}`;
-          }
-
-          if (typeof value === "string") {
-            return `${field}: ${value}`;
-          }
-
-          return `${field}: ${JSON.stringify(value)}`;
+          const message = formatErrorValue(value);
+          return message ? `${field}: ${message}` : "";
         })
+        .filter(Boolean)
         .join("; ");
     }
   } catch {
