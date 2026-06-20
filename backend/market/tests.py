@@ -1,7 +1,9 @@
 from decimal import Decimal
 
+from django.db import connection
 from django.db import IntegrityError, transaction
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APIClient
 
 from market.models import Asset, AssetPrice
@@ -51,6 +53,26 @@ class MarketModelTests(TestCase):
     self.assertIn("GC=F", symbols)
     aapl = next(asset for asset in response.data if asset["symbol"] == "AAPL")
     self.assertEqual(aapl["latest_price"]["close"], "186.200000")
+
+  def test_assets_api_uses_bounded_queries_for_latest_prices(self):
+    asset = Asset.objects.get(symbol="AAPL")
+    AssetPrice.objects.create(
+        asset=asset,
+        date="2025-01-02",
+        open=Decimal("185.0"),
+        high=Decimal("187.5"),
+        low=Decimal("183.4"),
+        close=Decimal("186.2"),
+        adjusted_close=Decimal("186.2"),
+        volume=51234567,
+        source="test",
+    )
+
+    with CaptureQueriesContext(connection) as queries:
+      response = APIClient().get("/api/assets")
+
+    self.assertEqual(response.status_code, 200)
+    self.assertLessEqual(len(queries), 2)
 
   def test_asset_prices_api_filters_by_date_range(self):
     asset = Asset.objects.get(symbol="AAPL")

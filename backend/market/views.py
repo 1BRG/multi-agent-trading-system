@@ -1,6 +1,7 @@
 import re
 from datetime import date, timedelta
 
+from django.db.models import OuterRef, Subquery
 from django.utils.dateparse import parse_date
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
@@ -44,7 +45,22 @@ class AssetListAPIView(APIView):
   permission_classes = [permissions.AllowAny]
 
   def get(self, request):
-    assets = Asset.objects.filter(is_active=True).order_by("symbol")
+    latest_price_id = (
+        AssetPrice.objects.filter(asset=OuterRef("pk")).order_by("-date").values("id")[:1]
+    )
+    assets = list(
+        Asset.objects.filter(is_active=True)
+        .annotate(latest_price_id=Subquery(latest_price_id))
+        .order_by("symbol")
+    )
+    latest_price_ids = [asset.latest_price_id for asset in assets if asset.latest_price_id]
+    latest_prices = AssetPrice.objects.select_related("asset").in_bulk(
+        latest_price_ids
+    )
+
+    for asset in assets:
+      asset.prefetched_latest_price = latest_prices.get(asset.latest_price_id)
+
     return Response(AssetSerializer(assets, many=True).data)
 
 

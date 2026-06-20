@@ -24,6 +24,12 @@ class AssetSerializer(serializers.ModelSerializer):
     read_only_fields = ("id", "created_at", "updated_at")
 
   def get_latest_price(self, asset):
+    if hasattr(asset, "prefetched_latest_price"):
+      latest_price = asset.prefetched_latest_price
+      if latest_price is None:
+        return None
+      return ChartAssetPriceSerializer(latest_price).data
+
     latest_price = asset.prices.order_by("-date").first()
     if latest_price is None:
       return None
