@@ -157,6 +157,16 @@ class PortfolioApiTests(TestCase):
 
     self.assertEqual(response.status_code, 400)
 
+  def test_unsupported_portfolio_currency_is_rejected(self):
+    response = self.client.post(
+        "/portfolios",
+        {"name": "Global", "cash": "100.00", "base_currency": "EUR"},
+        format="json",
+    )
+
+    self.assertEqual(response.status_code, 400)
+    self.assertIn("base_currency", response.data)
+
   def test_market_close_holding_uses_price_from_purchase_date(self):
     portfolio = Portfolio.objects.create(user=self.user, name="Core")
 
