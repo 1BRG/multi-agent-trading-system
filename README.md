@@ -170,4 +170,3 @@ docker compose exec frontend npx tsc --noEmit
 - Database schema: `docs/database_schema.md`
 - API routes: `docs/api_routes.md`
 - Architecture notes: `docs/architecture.md`
-```
