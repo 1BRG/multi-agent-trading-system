@@ -100,20 +100,6 @@ An interactive AI Strategy Manager that translates qualitative natural-language 
 
 ---
 
-## MDS Grading Evidence
-
-The repository evidence for the MDS laboratory grading rubric is tracked in:
-
-- Grading checklist: `docs/grading_evidence.md`
-- Architecture and workflow diagrams: `docs/diagrams.md`
-- AI development usage report: `docs/ai_usage_report.md`
-- Portfolio bug report handled on the grading branch: `docs/bug_report_portfolio.md`
-
-The product backlog and user stories are tracked in Linear and should be exported or linked in
-`docs/grading_evidence.md` before final submission.
-
----
-
 ## API Endpoints
 
 Important implemented endpoints:
@@ -170,3 +156,18 @@ docker compose exec frontend npx tsc --noEmit
 - Database schema: `docs/database_schema.md`
 - API routes: `docs/api_routes.md`
 - Architecture notes: `docs/architecture.md`
+
+---
+
+## MDS Grading Evidence
+
+The repository evidence for the MDS laboratory grading rubric is tracked in:
+
+- Grading checklist: `docs/grading_evidence.md`
+- Architecture and workflow diagrams: `docs/diagrams.md`
+- AI development usage report: `docs/ai_usage_report.md`
+- Portfolio bug report handled on the grading branch: `docs/bug_report_portfolio.md`
+- Product backlog, user stories, and issues: [Linear workspace](https://linear.app/multi-agent-trading-system/team/MUL/overview)
+- Demo video: [YouTube demo](https://www.youtube.com/watch?v=88_VAOaR9uM)
+
+Note: Linear may require workspace access.
