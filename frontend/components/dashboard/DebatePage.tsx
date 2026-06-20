@@ -4,18 +4,21 @@ import { useEffect, useState } from "react";
 import type { Asset } from "../../types/stock";
 import type { DebateSessionDetail } from "../../types/debate";
 import { apiRequest } from "../../lib/api";
-import { runDebate } from "../../lib/debate";
+import { getDebateSession, runDebate } from "../../lib/debate";
 import { DebateMessage } from "../debates/DebateMessage";
 import { DebatePanel } from "../debates/DebatePanel";
 
 interface DebatePageProps {
+  debateId?: string;
+  onDebateCreated?: (id: string) => void;
   title: string;
 }
 
-export function DebatePage({ title }: DebatePageProps) {
+export function DebatePage({ debateId, onDebateCreated, title }: DebatePageProps) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [selectedTicker, setSelectedTicker] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<DebateSessionDetail | null>(null);
 
@@ -23,7 +26,6 @@ export function DebatePage({ title }: DebatePageProps) {
     async function loadAssets() {
       try {
         const data = await apiRequest<Asset[]>("/api/assets", { auth: false });
-        // Only show stocks (not ETFs or commodities) for debate
         const stocks = data.filter(
           (a) => a.asset_type === "stock" && a.is_active
         );
@@ -36,6 +38,29 @@ export function DebatePage({ title }: DebatePageProps) {
     void loadAssets();
   }, []);
 
+  useEffect(() => {
+    if (!debateId) {
+      setResult(null);
+      setError(null);
+      return;
+    }
+
+    async function loadDebate() {
+      setIsLoadingHistory(true);
+      setError(null);
+      try {
+        const debate = await getDebateSession(Number(debateId));
+        setResult(debate);
+      } catch (err: any) {
+        setError(err.message || "Failed to load debate history.");
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    }
+
+    void loadDebate();
+  }, [debateId]);
+
   async function handleRunDebate() {
     if (!selectedTicker) return;
     setIsLoading(true);
@@ -45,6 +70,7 @@ export function DebatePage({ title }: DebatePageProps) {
     try {
       const debateResult = await runDebate(selectedTicker);
       setResult(debateResult);
+      onDebateCreated?.(String(debateResult.id));
     } catch (err: any) {
       setError(err.message || "Failed to run debate.");
     } finally {
@@ -58,8 +84,7 @@ export function DebatePage({ title }: DebatePageProps) {
         <p className="eyebrow">Stock Rater</p>
         <h1>{title}</h1>
         <p className="muted">
-          Two AI agents debate whether a stock is a BUY, SELL, or HOLD. A Judge
-          renders the final verdict with a conviction score.
+          Select a past debate from History or run a new Bull/Bear/Judge debate.
         </p>
       </div>
 
@@ -77,7 +102,7 @@ export function DebatePage({ title }: DebatePageProps) {
           >
             {assets.map((a) => (
               <option key={a.symbol} value={a.symbol}>
-                {a.symbol} — {a.name}
+                {a.symbol} - {a.name}
               </option>
             ))}
           </select>
@@ -89,7 +114,7 @@ export function DebatePage({ title }: DebatePageProps) {
           disabled={isLoading || !selectedTicker}
           type="button"
         >
-          {isLoading ? "Running debate…" : "Run Debate"}
+          {isLoading ? "Running debate..." : "Run Debate"}
         </button>
       </div>
 
@@ -97,11 +122,18 @@ export function DebatePage({ title }: DebatePageProps) {
         <div className="debate-loading">
           <div className="debate-loading-spinner" />
           <p>
-            Running 5-round debate for <strong>{selectedTicker}</strong>…
+            Running 5-round debate for <strong>{selectedTicker}</strong>...
           </p>
           <p className="muted">
-            This may take 1–3 minutes with a local LLM.
+            This may take 1-3 minutes with a local LLM.
           </p>
+        </div>
+      )}
+
+      {isLoadingHistory && (
+        <div className="debate-loading">
+          <div className="debate-loading-spinner" />
+          <p>Loading debate history...</p>
         </div>
       )}
 
