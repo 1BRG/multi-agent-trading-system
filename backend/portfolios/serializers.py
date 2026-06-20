@@ -259,13 +259,6 @@ class PortfolioSerializer(serializers.ModelSerializer):
       raise serializers.ValidationError("You already have a portfolio with this name.")
     return name
 
-  def validate_base_currency(self, base_currency):
-    base_currency = base_currency.strip().upper()
-    if base_currency not in SUPPORTED_PORTFOLIO_CURRENCIES:
-      supported = ", ".join(sorted(SUPPORTED_PORTFOLIO_CURRENCIES))
-      raise serializers.ValidationError(f"Unsupported portfolio currency. Use one of: {supported}.")
-    return base_currency
-
   def validate_cash(self, cash):
     if cash < 0:
       raise serializers.ValidationError("Cash cannot be negative.")
